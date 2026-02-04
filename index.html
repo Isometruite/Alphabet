@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Alphabet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- PAGE D’ACCUEIL -->
+  <section id="home" class="screen active">
+    <div class="hero">
+      <div class="logo" aria-label="ALPHABET">
+        <span class="c1">A</span><span class="c2">L</span><span class="c3">P</span><span class="c4">H</span><span class="c5">A</span><span class="c6">B</span><span class="c7">E</span><span class="c8">T</span>
+      </div>
+
+      <div class="pill">
+        <span class="spark">✦</span>
+        Jeu de mots
+      </div>
+
+      <h1 class="hero-title">Combien de mots peux-tu trouver&nbsp;?</h1>
+      <p class="hero-subtitle">
+        Choisis une lettre et trouve le maximum de mots. Joue<br />
+        seul ou entre amis&nbsp;!
+      </p>
+
+      <div class="card hero-card">
+        <div class="mode-grid">
+          <button id="modeWords" class="mode-card selected" type="button">
+            <div class="mode-title">📚 <strong>Tous les mots</strong></div>
+            <div class="mode-desc">Tous les mots de notre base de données</div>
+          </button>
+
+          <button id="modeCountries" class="mode-card" type="button">
+            <div class="mode-title">🌍 <strong>Pays (A → Z)</strong></div>
+            <div class="mode-desc">Parcours tout l’alphabet et trouve les 195 pays !</div>
+          </button>
+        </div>
+
+        <button id="continueBtn" class="main-btn" type="button">
+          Continuer →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHOIX DE LA LETTRE (SEULEMENT POUR "TOUS LES MOTS") -->
+  <section id="letters" class="screen">
+    <div class="card">
+      <div class="topline">
+        <h2>Choisis une lettre</h2>
+        <p class="subtitle">Chaque lettre affiche le nombre de mots disponibles.</p>
+      </div>
+
+      <div class="alphabet" id="alphabet"></div>
+
+      <button class="secondary-btn" onclick="goHome()">← Retour</button>
+    </div>
+  </section>
+
+  <!-- JEU (mots OU pays) -->
+  <section id="game" class="screen">
+    <div class="card">
+      <div class="topline">
+        <h2 id="gameTitle">Lettre : <span id="currentLetter"></span></h2>
+        <p class="subtitle" id="gameSubtitle">Trouve tous les mots possibles pour cette lettre.</p>
+      </div>
+
+      <div class="progress-card">
+        <div class="progress-top">
+          <div class="progress-big">
+            <span id="progressCount">0</span>
+            <span class="muted">/</span>
+            <span id="totalCount">0</span>
+          </div>
+          <div class="muted" id="progressLabel">0% complété</div>
+        </div>
+        <div class="bar">
+          <div class="bar-fill" id="barFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <form id="wordForm" class="word-row">
+        <div class="letter-chip" id="letterChip">A</div>
+        <input
+          type="text"
+          id="wordInput"
+          placeholder="Écris un mot…"
+          autocomplete="off"
+        />
+        <button type="submit" class="send-btn" aria-label="Valider">➤</button>
+      </form>
+
+      <p id="feedback" class="feedback"></p>
+
+      <div class="found-card">
+        <div class="found-header">
+          <span class="dot"></span>
+          <strong id="foundLabel">Trouvés (<span id="foundCount">0</span>)</strong>
+        </div>
+
+        <ul id="foundWords" class="found-list"></ul>
+        <p id="emptyState" class="muted center">Aucun trouvé pour l’instant</p>
+      </div>
+
+      <button class="secondary-btn" id="changeBtn" type="button">
+        Changer
+      </button>
+    </div>
+  </section>
+
+  <script src="Liste_mots_francais.js"></script>
+  <script src="Liste_Pays_Francais.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
