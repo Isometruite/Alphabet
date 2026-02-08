@@ -9,7 +9,7 @@
 
 <body>
 
-  <!-- PAGE D’ACCUEIL -->
+  <!-- HOME -->
   <section id="home" class="screen active">
     <div class="hero">
       <div class="logo" aria-label="ALPHABET">
@@ -28,6 +28,7 @@
       </p>
 
       <div class="card hero-card">
+        <!-- Choix de mode (comme tes cartes) -->
         <div class="mode-grid">
           <button id="modeWords" class="mode-card selected" type="button">
             <div class="mode-title">📚 <strong>Tous les mots</strong></div>
@@ -36,9 +37,26 @@
 
           <button id="modeCountries" class="mode-card" type="button">
             <div class="mode-title">🌍 <strong>Pays (A → Z)</strong></div>
-            <div class="mode-desc">Parcours tout l’alphabet et trouve les 195 pays !</div>
+            <div class="mode-desc">Trouve le plus de pays possible</div>
           </button>
         </div>
+
+        <!-- Mode Défis en dessous -->
+        <button id="modeDefis" class="defis-card" type="button">
+          <div class="defis-left">
+            <div class="defis-icon" aria-hidden="true">⚡</div>
+            <div class="defis-text">
+              <div class="defis-title"><strong>Mode Défis</strong></div>
+              <div class="defis-sub">10 rounds de défis variés à compléter</div>
+              <div class="defis-tags">
+                <span class="tag">Chronométré</span>
+                <span class="tag">Préfixes</span>
+                <span class="tag">Pays</span>
+                <span class="tag">+ encore</span>
+              </div>
+            </div>
+          </div>
+        </button>
 
         <button id="continueBtn" class="main-btn" type="button">
           Continuer →
@@ -47,7 +65,7 @@
     </div>
   </section>
 
-  <!-- CHOIX DE LA LETTRE (SEULEMENT POUR "TOUS LES MOTS") -->
+  <!-- LETTRES (pour Tous les mots) -->
   <section id="letters" class="screen">
     <div class="card">
       <div class="topline">
@@ -66,7 +84,7 @@
     <div class="card">
       <div class="topline">
         <h2 id="gameTitle">Lettre : <span id="currentLetter"></span></h2>
-        <p class="subtitle" id="gameSubtitle">Trouve tous les mots possibles pour cette lettre.</p>
+        <p class="subtitle" id="gameSubtitle">Trouve tous les mots possibles.</p>
       </div>
 
       <div class="progress-card">
@@ -85,12 +103,7 @@
 
       <form id="wordForm" class="word-row">
         <div class="letter-chip" id="letterChip">A</div>
-        <input
-          type="text"
-          id="wordInput"
-          placeholder="Écris un mot…"
-          autocomplete="off"
-        />
+        <input type="text" id="wordInput" placeholder="Écris..." autocomplete="off" />
         <button type="submit" class="send-btn" aria-label="Valider">➤</button>
       </form>
 
@@ -101,14 +114,111 @@
           <span class="dot"></span>
           <strong id="foundLabel">Trouvés (<span id="foundCount">0</span>)</strong>
         </div>
-
         <ul id="foundWords" class="found-list"></ul>
         <p id="emptyState" class="muted center">Aucun trouvé pour l’instant</p>
       </div>
 
-      <button class="secondary-btn" id="changeBtn" type="button">
-        Changer
-      </button>
+      <button class="secondary-btn" id="changeBtn" type="button">Changer</button>
+    </div>
+  </section>
+
+  <!-- MODE DÉFIS (setup) -->
+  <section id="defisSetup" class="screen">
+    <div class="card">
+      <h2 class="center-title">Créer une partie Défis</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span>Votre nom</span>
+          <input id="playerName" type="text" placeholder="Entrez votre nom..." />
+        </label>
+
+        <label class="field">
+          <span>Nom de l’équipe</span>
+          <input id="teamName" type="text" placeholder="Les Champions..." />
+        </label>
+      </div>
+
+      <div class="section-title">Langue</div>
+      <div class="choice-grid">
+        <button id="langFR" class="choice-card selected" type="button">
+          <div class="choice-big">FR</div>
+          <div class="choice-small" id="frCount">— mots</div>
+        </button>
+        <button id="langEN" class="choice-card" type="button">
+          <div class="choice-big">EN</div>
+          <div class="choice-small">Bientôt</div>
+        </button>
+      </div>
+
+      <div class="section-title">Nombre de défis</div>
+      <div class="choice-row">
+        <button class="pill-btn" id="defis5" type="button">5 défis</button>
+        <button class="pill-btn selected" id="defis10" type="button">10 défis</button>
+        <button class="pill-btn" id="defisInf" type="button">Illimité</button>
+      </div>
+
+      <div class="section-title">Nombre de joueurs</div>
+      <div class="choice-row">
+        <button class="pill-btn selected" id="p1" type="button">Solo</button>
+        <button class="pill-btn" id="p2" type="button">2 joueurs</button>
+        <button class="pill-btn" id="p3" type="button">3 joueurs</button>
+        <button class="pill-btn" id="p4" type="button">4 joueurs</button>
+      </div>
+
+      <div class="rounds-header">
+        <div class="section-title" style="margin:0;">Les défis</div>
+        <button id="regenBtn" class="link-btn" type="button">↻ Régénérer</button>
+      </div>
+
+      <div id="roundList" class="round-list"></div>
+
+      <button id="createDefisBtn" class="main-btn" type="button">Créer la partie</button>
+      <button class="secondary-btn" type="button" onclick="goHome()">← Retour</button>
+    </div>
+  </section>
+
+  <!-- MODE DÉFIS (play minimal testable) -->
+  <section id="defisPlay" class="screen">
+    <div class="card">
+      <div class="topline">
+        <h2 id="defisRoundTitle">Round 1</h2>
+        <p class="subtitle" id="defisRoundDesc">Défi...</p>
+      </div>
+
+      <div class="progress-card">
+        <div class="progress-top">
+          <div class="progress-big">
+            <span id="defisFound">0</span>
+            <span class="muted">/</span>
+            <span id="defisGoal">0</span>
+          </div>
+          <div class="muted" id="defisPct">0% complété</div>
+        </div>
+        <div class="bar">
+          <div class="bar-fill" id="defisBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <form id="defisForm" class="word-row">
+        <div class="letter-chip" id="defisChip">⚡</div>
+        <input type="text" id="defisInput" placeholder="Écris..." autocomplete="off" />
+        <button type="submit" class="send-btn" aria-label="Valider">➤</button>
+      </form>
+
+      <p id="defisFeedback" class="feedback"></p>
+
+      <div class="found-card">
+        <div class="found-header">
+          <span class="dot"></span>
+          <strong>Trouvés (<span id="defisListCount">0</span>)</strong>
+        </div>
+        <ul id="defisList" class="found-list"></ul>
+        <p id="defisEmpty" class="muted center">Aucun trouvé pour l’instant</p>
+      </div>
+
+      <button id="nextRoundBtn" class="main-btn" type="button">Round suivant</button>
+      <button class="secondary-btn" type="button" onclick="showScreen('defisSetup')">← Retour aux réglages</button>
     </div>
   </section>
 
