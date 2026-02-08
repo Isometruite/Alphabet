@@ -476,4 +476,168 @@ function generateDefisRounds(forceShuffle=false){
     diff: "Difficile",
     diffClass: "diff-hard",
     text: `Trouve ${clampGoal(cMax2, 2)} mots en "C"`,
-    goal: clamp
+    goal: clampGoal(cMax2, 2),
+    letter: "C"
+  });
+
+  // Mélange
+  const shuffled = [...pool];
+  if (forceShuffle) shuffled.sort(() => Math.random() - 0.5);
+
+  const n = (defisCountChoice === Infinity) ? 10 : defisCountChoice; // illimité = 10 visibles pour l’instant
+  defisRounds = shuffled.slice(0, Math.min(n, shuffled.length));
+
+  // Si l’utilisateur met “illimité”, on pourra plus tard générer au fil de l’eau.
+}
+
+function renderRounds(){
+  roundList.innerHTML = "";
+
+  defisRounds.forEach((r, i) => {
+    const el = document.createElement("div");
+    el.className = "round-item";
+    el.innerHTML = `
+      <div class="round-icon">${r.icon}</div>
+      <div class="round-main">
+        <div class="round-top">
+          <div class="round-name">Round ${i + 1}</div>
+          <div class="badge-diff ${r.diffClass}">● ${r.diff}</div>
+        </div>
+        <div class="round-desc">${r.text}</div>
+      </div>
+    `;
+    roundList.appendChild(el);
+  });
+}
+
+/* Play */
+defisForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  submitDefisEntry();
+});
+
+nextRoundBtn.addEventListener("click", () => {
+  const next = currentRoundIndex + 1;
+  if (next >= defisRounds.length){
+    defisFeedback.style.color = "#16a34a";
+    defisFeedback.textContent = "🎉 Fin des défis (test) !";
+    return;
+  }
+  startDefisRound(next);
+});
+
+function setDefisFeedback(type, msg){
+  if (type === "ok") defisFeedback.style.color = "#16a34a";
+  if (type === "warn") defisFeedback.style.color = "#ca8a04";
+  if (type === "err") defisFeedback.style.color = "#dc2626";
+  defisFeedback.textContent = msg;
+}
+
+function startDefisRound(index){
+  currentRoundIndex = index;
+  currentRoundFound = [];
+  defisList.innerHTML = "";
+  defisEmpty.style.display = "block";
+  defisListCount.textContent = "0";
+  defisFeedback.textContent = "";
+
+  const r = defisRounds[index];
+  defisRoundTitle.textContent = `Round ${index + 1}`;
+  defisRoundDesc.textContent = r.text;
+
+  defisChip.textContent = r.icon || "⚡";
+  defisInput.value = "";
+  defisInput.placeholder = (r.type.startsWith("countries")) ? "Écris un pays..." : "Écris un mot...";
+
+  defisGoal.textContent = String(r.goal);
+  updateDefisProgress();
+
+  showScreen("defisPlay");
+  defisInput.focus();
+}
+
+function updateDefisProgress(){
+  const goal = Number(defisGoal.textContent || 0);
+  const current = currentRoundFound.length;
+
+  defisFound.textContent = String(current);
+
+  const pct = goal > 0 ? Math.round((current / goal) * 100) : 0;
+  defisPct.textContent = `${pct}% complété`;
+  defisBar.style.width = `${pct}%`;
+
+  defisListCount.textContent = String(current);
+  defisEmpty.style.display = current > 0 ? "none" : "block";
+}
+
+function addDefisFound(label){
+  const li = document.createElement("li");
+  li.textContent = label;
+  defisList.appendChild(li);
+}
+
+function submitDefisEntry(){
+  const raw = defisInput.value.trim();
+  if (!raw) return;
+
+  const r = defisRounds[currentRoundIndex];
+  const entryN = normalizeText(raw);
+
+  // dédup
+  if (currentRoundFound.includes(entryN)){
+    setDefisFeedback("warn", "Déjà trouvé.");
+    return;
+  }
+
+  // validation selon le type
+  if (r.type === "countries_any" || r.type === "countries_region"){
+    const listN = LISTE_PAYS_FRANCAIS.map(p => normalizeText(p));
+    if (!listN.includes(entryN)){
+      setDefisFeedback("err", "Pays absent de la liste.");
+      return;
+    }
+  } else {
+    const listN = LISTE_MOTS_FRANCAIS.map(w => normalizeText(w));
+    if (!listN.includes(entryN)){
+      setDefisFeedback("err", "Mot absent de la liste.");
+      return;
+    }
+
+    if (r.type === "words_letter" && r.letter){
+      if (!entryN.startsWith(normalizeText(r.letter))){
+        setDefisFeedback("err", `Le mot doit commencer par "${r.letter}".`);
+        return;
+      }
+    }
+
+    if (r.type === "words_prefix" && r.prefix){
+      if (!entryN.startsWith(normalizeText(r.prefix))){
+        setDefisFeedback("err", `Le mot doit commencer par "${r.prefix.toUpperCase()}".`);
+        return;
+      }
+    }
+
+    if (r.type === "words_minlen" && r.minLen){
+      if (entryN.length < r.minLen){
+        setDefisFeedback("err", `Le mot doit avoir au moins ${r.minLen} lettres.`);
+        return;
+      }
+    }
+  }
+
+  // OK
+  currentRoundFound.push(entryN);
+  addDefisFound(raw);
+
+  setDefisFeedback("ok", "✅ Valide !");
+  defisInput.value = "";
+  updateDefisProgress();
+
+  // auto-finish
+  const goal = Number(defisGoal.textContent || 0);
+  if (goal > 0 && currentRoundFound.length >= goal){
+    setDefisFeedback("ok", "🎉 Objectif atteint ! Clique sur “Round suivant”.");
+  }
+
+  defisInput.focus();
+}
