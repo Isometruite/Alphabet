@@ -35,6 +35,18 @@ body{
   text-align:center;
 }
 
+.version-stamp{
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  opacity: 0.6;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+  user-select: none;
+}
+
 .logo{
   font-size: 52px;
   font-weight: 900;
