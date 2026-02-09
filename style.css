@@ -119,11 +119,10 @@ body{
 
 .defis-card{
   width:100%;
-  border:1px solid #60a5fa;
+  border:1px solid #d8e4ef;
   border-radius: 18px;
   padding: 16px;
-  background: linear-gradient(90deg, #22d3ee 0%, #3b82f6 100%);
-  color:#ffffff;
+  background: #ffffff;
   cursor:pointer;
   text-align:left;
   transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, filter .12s ease;
@@ -135,12 +134,17 @@ body{
   box-shadow: var(--shadow-soft);
   filter: brightness(1.08);
 }
+.defis-card:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+  background:#f4f8ff;
+}
 .defis-left{display:flex;gap:12px;align-items:flex-start}
 .defis-icon{
   width:40px;height:40px;border-radius:14px;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.2);
-  border:1px solid rgba(255,255,255,.45);
+  background:#e0f2fe;
+  border:1px solid #bae6fd;
   font-size:20px;
 }
 .defis-title{font-size:16px}
@@ -172,7 +176,6 @@ body{
   transform: translateY(-1px);
   box-shadow: 0 16px 30px rgba(59,130,246,.3);
   filter: brightness(1.08);
-  background: linear-gradient(90deg, #38d9ff 0%, #60a5fa 100%);
 }
 .secondary-btn{
   width:100%;
@@ -287,7 +290,6 @@ body{
 .send-btn:hover{
   filter: brightness(1.08);
   transform: translateY(-1px);
-  background: linear-gradient(90deg, #38d9ff 0%, #60a5fa 100%);
 }
 
 .feedback{min-height:22px;margin:10px 0 6px 0}
