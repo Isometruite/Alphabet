@@ -181,6 +181,11 @@
           <span>Code de la partie</span>
           <input id="joinCode" type="text" placeholder="AB12" maxlength="4" />
         </label>
+
+        <label class="field">
+          <span>Serveur coop (optionnel)</span>
+          <input id="joinServer" type="text" placeholder="wss://ton-serveur.com/coop" />
+        </label>
       </div>
 
       <p id="joinFeedback" class="feedback"></p>
@@ -205,6 +210,11 @@
           <span>Nom de l’équipe</span>
           <input id="teamName" type="text" placeholder="Les Champions..." />
         </label>
+
+        <label class="field">
+          <span>Serveur coop (optionnel)</span>
+          <input id="coopServer" type="text" placeholder="wss://ton-serveur.com/coop" />
+        </label>
       </div>
 
       <div class="section-title">Nombre de défis</div>
@@ -227,6 +237,8 @@
       </div>
 
       <div id="roundList" class="round-list"></div>
+
+      <p id="setupFeedback" class="feedback"></p>
 
       <button id="createDefisBtn" class="main-btn" type="button">Créer la partie</button>
       <button class="secondary-btn" id="backFromDefisSetup" type="button">← Retour</button>

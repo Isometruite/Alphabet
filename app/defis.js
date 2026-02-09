@@ -2,9 +2,10 @@ window.APP = window.APP || {};
 APP.defis = {};
 
 let timerTickId = null;
-let coopChannel = null;
+let coopTransport = null;
 let coopCode = null;
 let coopStarted = false;
+let coopMode = "local";
 
 const COLOR_PALETTE = ["#ef4444","#f97316","#eab308","#22c55e","#06b6d4","#3b82f6","#8b5cf6","#ec4899"];
 
@@ -27,10 +28,11 @@ APP.store.defis.found = APP.store.defis.found || []; // [{raw, entryN, by}]
 
 // ---------- helpers ----------
 APP.defis.resetCoop = function(){
-  if (coopChannel) coopChannel.close();
-  coopChannel = null;
+  if (coopTransport) coopTransport.close();
+  coopTransport = null;
   coopCode = null;
   coopStarted = false;
+  coopMode = "local";
 
   APP.store.defis.isHost = false;
   APP.store.defis.isCoop = false;
@@ -46,9 +48,126 @@ APP.defis.makeCode4 = function(){
   return out;
 };
 
+APP.defis.setCoopServerOverride = function(raw){
+  const value = (raw || "").trim();
+  if (value){
+    localStorage.setItem("ALPHABET_COOP_WS", value);
+  } else {
+    localStorage.removeItem("ALPHABET_COOP_WS");
+  }
+};
+
+APP.defis.getCoopWsUrl = function(){
+  const override = window.APP_COOP_WS || localStorage.getItem("ALPHABET_COOP_WS");
+  if (override) return override;
+  if (location.protocol === "http:" || location.protocol === "https:"){
+    return `${location.origin.replace(/^http/, "ws")}/coop`;
+  }
+  return null;
+};
+
+APP.defis.createBroadcastTransport = function(code){
+  const channel = new BroadcastChannel(`ALPHABET_COOP_${code}`);
+  const transport = {
+    onmessage: null,
+    send: (data) => channel.postMessage(data),
+    close: () => channel.close()
+  };
+  channel.onmessage = (ev) => transport.onmessage && transport.onmessage(ev.data || {});
+  return transport;
+};
+
+APP.defis.createWebSocketTransport = function(wsUrl, code, role, name){
+  return new Promise((resolve, reject) => {
+    let settled = false;
+  const ws = new WebSocket(wsUrl);
+
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      ws.close();
+      reject({ code: "CONNECTION_TIMEOUT", message: "Connexion au serveur coop impossible." });
+    }, 2500);
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "HELLO", payload: { code, role, name } }));
+    };
+
+    ws.onerror = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      reject({ code: "CONNECTION_FAILED", message: "Connexion au serveur coop impossible." });
+    };
+
+    ws.onmessage = (ev) => {
+      let msg = null;
+      try {
+        msg = JSON.parse(ev.data);
+      } catch (err) {
+        return;
+      }
+
+      if (!settled && msg.type === "HELLO_OK"){
+        settled = true;
+        clearTimeout(timeout);
+        const transport = {
+          onmessage: null,
+          send: (data) => ws.send(JSON.stringify({ ...data, code })),
+          close: () => ws.close()
+        };
+        ws.onmessage = (evt) => {
+          let data = null;
+          try {
+            data = JSON.parse(evt.data);
+          } catch (err) {
+            return;
+          }
+          transport.onmessage && transport.onmessage(data);
+        };
+        resolve(transport);
+        return;
+      }
+
+      if (!settled && msg.type === "HELLO_ERR"){
+        settled = true;
+        clearTimeout(timeout);
+        ws.close();
+        reject({ code: msg.payload?.code || "HELLO_ERR", message: msg.payload?.message || "Connexion refusée." });
+      }
+    };
+
+    ws.onclose = () => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timeout);
+        reject({ code: "CONNECTION_CLOSED", message: "Connexion au serveur coop fermée." });
+      }
+    };
+  });
+};
+
+APP.defis.connectCoopTransport = async function({ code, role, name, allowLocalFallback = true }){
+  const wsUrl = APP.defis.getCoopWsUrl();
+  if (wsUrl && typeof WebSocket !== "undefined"){
+    try {
+      const transport = await APP.defis.createWebSocketTransport(wsUrl, code, role, name);
+      return { transport, mode: "remote" };
+    } catch (err) {
+      if (!allowLocalFallback || err?.code === "ROOM_NOT_FOUND" || err?.code === "ROOM_EXISTS"){
+        throw err;
+      }
+    }
+  }
+  if (!allowLocalFallback){
+    throw { code: "NO_TRANSPORT", message: "Aucun transport coop disponible." };
+  }
+  return { transport: APP.defis.createBroadcastTransport(code), mode: "local" };
+};
+
 APP.defis.broadcast = function(type, payload){
-  if (!coopChannel) return;
-  coopChannel.postMessage({ type, payload });
+  if (!coopTransport) return;
+  coopTransport.send({ type, payload });
 };
 
 APP.defis.findPlayer = function(name){
@@ -364,6 +483,13 @@ APP.defis.renderLobby = function(){
   const readyBtn = APP.$("readyBtn");
   if (readyBtn) readyBtn.style.display = "block";
 
+  const hint = APP.$("lobbyHint");
+  if (hint){
+    hint.textContent = coopMode === "remote"
+      ? "Connexion en ligne active. Partage ce code à distance."
+      : "Mode local. Pour jouer en ligne, démarre le serveur coop et indique son URL.";
+  }
+
   const list = APP.$("lobbyPlayers");
   const empty = APP.$("lobbyEmpty");
   list.innerHTML = "";
@@ -407,7 +533,7 @@ APP.defis.openLobby = function(code){
 };
 
 // ---------- coop create/join ----------
-APP.defis.hostCreate = function(hostName){
+APP.defis.hostCreate = async function(hostName){
   APP.defis.resetCoop();
   APP.store.defis.isHost = true;
   APP.store.defis.isCoop = true;
@@ -416,8 +542,34 @@ APP.defis.hostCreate = function(hostName){
   APP.store.defis.myName = APP.store.defis.coopHost;
   APP.store.defis.myReady = false;
 
-  const code = APP.defis.makeCode4();
+  let code = APP.defis.makeCode4();
+  let transportOut = null;
+
+  for (let i = 0; i < 5; i++){
+    try {
+      transportOut = await APP.defis.connectCoopTransport({
+        code,
+        role: "host",
+        name: APP.store.defis.coopHost,
+        allowLocalFallback: true
+      });
+      break;
+    } catch (err) {
+      if (err?.code === "ROOM_EXISTS"){
+        code = APP.defis.makeCode4();
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  if (!transportOut){
+    throw { code: "NO_TRANSPORT", message: "Impossible de créer la partie coop." };
+  }
+
   coopCode = code;
+  coopTransport = transportOut.transport;
+  coopMode = transportOut.mode;
 
   APP.store.defis.coopPlayers = [{
     name: APP.store.defis.coopHost,
@@ -425,18 +577,18 @@ APP.defis.hostCreate = function(hostName){
     color: COLOR_PALETTE[0]
   }];
 
-  localStorage.setItem(`ALPHABET_COOP_${code}`, JSON.stringify({
-    host: APP.store.defis.coopHost,
-    createdAt: Date.now()
-  }));
+  if (coopMode === "local"){
+    localStorage.setItem(`ALPHABET_COOP_${code}`, JSON.stringify({
+      host: APP.store.defis.coopHost,
+      createdAt: Date.now()
+    }));
+  }
 
-  coopChannel = new BroadcastChannel(`ALPHABET_COOP_${code}`);
+  coopTransport.onmessage = (msg) => {
+    const payloadMsg = msg || {};
 
-  coopChannel.onmessage = (ev) => {
-    const msg = ev.data || {};
-
-    if (msg.type === "JOIN_REQUEST"){
-      const name = (msg.payload && msg.payload.name) ? msg.payload.name : "Joueur";
+    if (payloadMsg.type === "JOIN_REQUEST"){
+      const name = (payloadMsg.payload && payloadMsg.payload.name) ? payloadMsg.payload.name : "Joueur";
       if (!APP.store.defis.coopPlayers.some(p => p.name === name)){
         APP.store.defis.coopPlayers.push({ name, ready: false, color: APP.defis.assignColorForNewPlayer() });
       }
@@ -447,8 +599,8 @@ APP.defis.hostCreate = function(hostName){
       APP.defis.renderLobby();
     }
 
-    if (msg.type === "READY_SET"){
-      const { name, ready } = msg.payload || {};
+    if (payloadMsg.type === "READY_SET"){
+      const { name, ready } = payloadMsg.payload || {};
       const p = APP.defis.findPlayer(name);
       if (p){
         p.ready = !!ready;
@@ -460,9 +612,9 @@ APP.defis.hostCreate = function(hostName){
       }
     }
 
-    if (msg.type === "TRY_ENTRY"){
-      const raw = (msg.payload && msg.payload.raw) ? msg.payload.raw : "";
-      const from = (msg.payload && msg.payload.from) ? msg.payload.from : "Joueur";
+    if (payloadMsg.type === "TRY_ENTRY"){
+      const raw = (payloadMsg.payload && payloadMsg.payload.raw) ? payloadMsg.payload.raw : "";
+      const from = (payloadMsg.payload && payloadMsg.payload.from) ? payloadMsg.payload.from : "Joueur";
 
       const res = APP.defis.validateEntryForRound(raw);
       if (!res.ok){
@@ -483,7 +635,7 @@ APP.defis.hostCreate = function(hostName){
   return code;
 };
 
-APP.defis.joinCoop = function(name, code){
+APP.defis.joinCoop = async function(name, code){
   APP.defis.resetCoop();
   APP.store.defis.isHost = false;
   APP.store.defis.isCoop = true;
@@ -491,11 +643,29 @@ APP.defis.joinCoop = function(name, code){
   code = (code || "").trim().toUpperCase();
   if (code.length !== 4) return { ok:false, error:"Code invalide." };
 
-  const sess = localStorage.getItem(`ALPHABET_COOP_${code}`);
-  if (!sess) return { ok:false, error:"Aucune partie trouvée (testable en multi-onglets seulement)." };
+  let transportOut = null;
+  try {
+    transportOut = await APP.defis.connectCoopTransport({
+      code,
+      role: "join",
+      name: name || "Joueur",
+      allowLocalFallback: true
+    });
+  } catch (err) {
+    return { ok:false, error: err?.message || "Connexion coop impossible." };
+  }
+
+  if (transportOut.mode === "local"){
+    const sess = localStorage.getItem(`ALPHABET_COOP_${code}`);
+    if (!sess){
+      transportOut.transport.close();
+      return { ok:false, error:"Aucune partie trouvée. En ligne : démarre le serveur coop et renseigne son URL." };
+    }
+  }
 
   coopCode = code;
-  coopChannel = new BroadcastChannel(`ALPHABET_COOP_${code}`);
+  coopTransport = transportOut.transport;
+  coopMode = transportOut.mode;
 
   APP.store.defis.myName = name || "Joueur";
   APP.store.defis.myReady = false;
@@ -503,17 +673,17 @@ APP.defis.joinCoop = function(name, code){
 
   APP.defis.openLobby(code);
 
-  coopChannel.onmessage = (ev) => {
-    const msg = ev.data || {};
+  coopTransport.onmessage = (msg) => {
+    const payloadMsg = msg || {};
 
-    if (msg.type === "ROSTER"){
-      APP.store.defis.coopPlayers = (msg.payload && msg.payload.players) ? msg.payload.players : [];
-      if (msg.payload && msg.payload.expectedPlayers) APP.store.defis.expectedPlayers = msg.payload.expectedPlayers;
+    if (payloadMsg.type === "ROSTER"){
+      APP.store.defis.coopPlayers = (payloadMsg.payload && payloadMsg.payload.players) ? payloadMsg.payload.players : [];
+      if (payloadMsg.payload && payloadMsg.payload.expectedPlayers) APP.store.defis.expectedPlayers = payloadMsg.payload.expectedPlayers;
       APP.defis.renderLobby();
     }
 
-    if (msg.type === "START"){
-      const payload = msg.payload || {};
+    if (payloadMsg.type === "START"){
+      const payload = payloadMsg.payload || {};
       const startAt = payload.startAt || (Date.now()+2000);
       const endAt = payload.endAt || null;
       const index = payload.index ?? 0;
@@ -525,8 +695,8 @@ APP.defis.joinCoop = function(name, code){
       APP.defis.startCountdownAt(startAt, () => APP.defis.startRound(index, endAt));
     }
 
-    if (msg.type === "ENTRY_ACCEPTED"){
-      const { raw, entryN, by } = msg.payload || {};
+    if (payloadMsg.type === "ENTRY_ACCEPTED"){
+      const { raw, entryN, by } = payloadMsg.payload || {};
       const found = APP.store.defis.found || [];
       if (entryN && !found.some(x => x.entryN === entryN)){
         APP.defis.applyAcceptedEntry(raw, entryN, by || "Joueur");
@@ -536,8 +706,8 @@ APP.defis.joinCoop = function(name, code){
       }
     }
 
-    if (msg.type === "ENTRY_REJECTED"){
-      const { to, type, msg:txt } = msg.payload || {};
+    if (payloadMsg.type === "ENTRY_REJECTED"){
+      const { to, type, msg:txt } = payloadMsg.payload || {};
       if (to === APP.store.defis.myName){
         APP.defis.setFeedback(type || "err", txt || "Refusé.");
         APP.$("defisInput").value = "";
@@ -545,11 +715,21 @@ APP.defis.joinCoop = function(name, code){
       }
     }
 
-    if (msg.type === "ROUND_SUCCESS") APP.defis.openSuccess(msg.payload?.text || "Réussi !");
-    if (msg.type === "ROUND_FAIL")    APP.defis.openFail(msg.payload?.text || "Échec.");
+    if (payloadMsg.type === "ROUND_SUCCESS") APP.defis.openSuccess(payloadMsg.payload?.text || "Réussi !");
+    if (payloadMsg.type === "ROUND_FAIL")    APP.defis.openFail(payloadMsg.payload?.text || "Échec.");
 
-    if (msg.type === "NEXT_ROUND"){
-      const payload = msg.payload || {};
+    if (payloadMsg.type === "ROOM_CLOSED"){
+      APP.defis.resetCoop();
+      const feedback = APP.$("joinFeedback");
+      if (feedback){
+        feedback.style.color = "#dc2626";
+        feedback.textContent = payloadMsg.payload?.message || "La partie a été fermée.";
+      }
+      APP.showScreen("defisHome");
+    }
+
+    if (payloadMsg.type === "NEXT_ROUND"){
+      const payload = payloadMsg.payload || {};
       const startAt = payload.startAt || (Date.now()+2000);
       const endAt = payload.endAt || null;
       const index = payload.index ?? 0;
@@ -559,13 +739,13 @@ APP.defis.joinCoop = function(name, code){
     }
   };
 
-  coopChannel.postMessage({ type:"JOIN_REQUEST", payload:{ name: APP.store.defis.myName } });
+  coopTransport.send({ type:"JOIN_REQUEST", payload:{ name: APP.store.defis.myName } });
   return { ok:true };
 };
 
 // Ready toggle (host or joiner)
 APP.defis.setMyReady = function(ready){
-  if (!coopChannel) return;
+  if (!coopTransport) return;
 
   APP.store.defis.myReady = !!ready;
   const p = APP.defis.findPlayer(APP.store.defis.myName);
@@ -576,7 +756,7 @@ APP.defis.setMyReady = function(ready){
 
 // Host start / next
 APP.defis.coopStart = function(index){
-  if (!coopChannel || !coopCode) return;
+  if (!coopTransport || !coopCode) return;
   if (!APP.store.defis.isHost) return;
 
   const r = (APP.store.defis.rounds || [])[index];

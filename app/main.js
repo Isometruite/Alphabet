@@ -107,6 +107,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     APP.$("teamField").style.display = "block";
     showPlayersChoice(true);
+    const setupFeedback = APP.$("setupFeedback");
+    if (setupFeedback) setupFeedback.textContent = "";
+    const coopServer = APP.$("coopServer");
+    if (coopServer) coopServer.value = localStorage.getItem("ALPHABET_COOP_WS") || "";
 
     setChoice(["defis5","defis10","defisInf"], "defis10");
     APP.store.defis.countChoice = 10;
@@ -123,6 +127,8 @@ window.addEventListener("DOMContentLoaded", () => {
     APP.store.defis.isCoop = true;
     APP.$("joinName").value = "";
     APP.$("joinCode").value = "";
+    const joinServer = APP.$("joinServer");
+    if (joinServer) joinServer.value = localStorage.getItem("ALPHABET_COOP_WS") || "";
     APP.$("joinFeedback").textContent = "";
     APP.showScreen("defisJoin");
     APP.$("joinName").focus();
@@ -159,18 +165,30 @@ window.addEventListener("DOMContentLoaded", () => {
   };
 
   // Create party
-  APP.$("createDefisBtn").onclick = () => {
+  APP.$("createDefisBtn").onclick = async () => {
     const name = (APP.$("playerName").value || "").trim() || "Joueur";
 
     if (APP.store.defis.isCoop) {
-      const code = APP.defis.hostCreate(name);
+      const setupFeedback = APP.$("setupFeedback");
+      if (setupFeedback) setupFeedback.textContent = "";
+      try {
+        const serverOverride = (APP.$("coopServer")?.value || "").trim();
+        APP.defis.setCoopServerOverride(serverOverride);
+        const code = await APP.defis.hostCreate(name);
 
-      // reset ready state UI
-      APP.store.defis.myReady = false;
-      setReadyButtonUI(false);
+        // reset ready state UI
+        APP.store.defis.myReady = false;
+        setReadyButtonUI(false);
 
-      APP.defis.openLobby(code);
-      return;
+        APP.defis.openLobby(code);
+        return;
+      } catch (err) {
+        if (setupFeedback){
+          setupFeedback.style.color = "#dc2626";
+          setupFeedback.textContent = err?.message || "Impossible de créer la partie.";
+        }
+        return;
+      }
     }
 
     APP.store.defis.currentIndex = 0;
@@ -179,11 +197,13 @@ window.addEventListener("DOMContentLoaded", () => {
   };
 
   // Join confirm
-  APP.$("joinConfirmBtn").onclick = () => {
+  APP.$("joinConfirmBtn").onclick = async () => {
     const name = (APP.$("joinName").value || "").trim() || "Joueur";
     const code = (APP.$("joinCode").value || "").trim().toUpperCase();
+    const serverOverride = (APP.$("joinServer")?.value || "").trim();
+    APP.defis.setCoopServerOverride(serverOverride);
 
-    const out = APP.defis.joinCoop(name, code);
+    const out = await APP.defis.joinCoop(name, code);
     if (!out.ok) {
       APP.$("joinFeedback").style.color = "#dc2626";
       APP.$("joinFeedback").textContent = out.error;
