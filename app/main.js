@@ -109,8 +109,6 @@ window.addEventListener("DOMContentLoaded", () => {
     showPlayersChoice(true);
     const setupFeedback = APP.$("setupFeedback");
     if (setupFeedback) setupFeedback.textContent = "";
-    const coopServer = APP.$("coopServer");
-    if (coopServer) coopServer.value = localStorage.getItem("ALPHABET_COOP_WS") || "";
 
     setChoice(["defis5","defis10","defisInf"], "defis10");
     APP.store.defis.countChoice = 10;
@@ -172,8 +170,6 @@ window.addEventListener("DOMContentLoaded", () => {
       const setupFeedback = APP.$("setupFeedback");
       if (setupFeedback) setupFeedback.textContent = "";
       try {
-        const serverOverride = (APP.$("coopServer")?.value || "").trim();
-        APP.defis.setCoopServerOverride(serverOverride);
         const code = await APP.defis.hostCreate(name);
 
         // reset ready state UI
@@ -200,8 +196,6 @@ window.addEventListener("DOMContentLoaded", () => {
   APP.$("joinConfirmBtn").onclick = async () => {
     const name = (APP.$("joinName").value || "").trim() || "Joueur";
     const code = (APP.$("joinCode").value || "").trim().toUpperCase();
-    const serverOverride = (APP.$("joinServer")?.value || "").trim();
-    APP.defis.setCoopServerOverride(serverOverride);
 
     const out = await APP.defis.joinCoop(name, code);
     if (!out.ok) {

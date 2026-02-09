@@ -48,15 +48,6 @@ APP.defis.makeCode4 = function(){
   return out;
 };
 
-APP.defis.setCoopServerOverride = function(raw){
-  const value = (raw || "").trim();
-  if (value){
-    localStorage.setItem("ALPHABET_COOP_WS", value);
-  } else {
-    localStorage.removeItem("ALPHABET_COOP_WS");
-  }
-};
-
 APP.defis.getCoopWsUrl = function(){
   const override = window.APP_COOP_WS || localStorage.getItem("ALPHABET_COOP_WS");
   if (override) return override;
@@ -80,7 +71,7 @@ APP.defis.createBroadcastTransport = function(code){
 APP.defis.createWebSocketTransport = function(wsUrl, code, role, name){
   return new Promise((resolve, reject) => {
     let settled = false;
-  const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(wsUrl);
 
     const timeout = setTimeout(() => {
       if (settled) return;
@@ -487,7 +478,7 @@ APP.defis.renderLobby = function(){
   if (hint){
     hint.textContent = coopMode === "remote"
       ? "Connexion en ligne active. Partage ce code à distance."
-      : "Mode local. Pour jouer en ligne, démarre le serveur coop et indique son URL.";
+      : "Astuce : ouvre 2 onglets pour tester localement.";
   }
 
   const list = APP.$("lobbyPlayers");
@@ -659,7 +650,7 @@ APP.defis.joinCoop = async function(name, code){
     const sess = localStorage.getItem(`ALPHABET_COOP_${code}`);
     if (!sess){
       transportOut.transport.close();
-      return { ok:false, error:"Aucune partie trouvée. En ligne : démarre le serveur coop et renseigne son URL." };
+      return { ok:false, error:"Aucune partie trouvée (multi-onglets requis en local)." };
     }
   }
 
