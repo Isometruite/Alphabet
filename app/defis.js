@@ -18,6 +18,7 @@ APP.store.defis.isCoop = false;
 APP.store.defis.coopPlayers = [];   // [{name, ready, color}]
 APP.store.defis.myName = "";
 APP.store.defis.myReady = false;
+APP.store.defis.coopNotice = "";
 
 APP.store.defis.expectedPlayers = APP.store.defis.expectedPlayers ?? 2;
 APP.store.defis.countChoice = APP.store.defis.countChoice ?? 10;
@@ -39,6 +40,7 @@ APP.defis.resetCoop = function(){
   APP.store.defis.coopPlayers = [];
   APP.store.defis.myName = "";
   APP.store.defis.myReady = false;
+  APP.store.defis.coopNotice = "";
 };
 
 APP.defis.makeCode4 = function(){
@@ -476,9 +478,12 @@ APP.defis.renderLobby = function(){
 
   const hint = APP.$("lobbyHint");
   if (hint){
-    hint.textContent = coopMode === "remote"
-      ? "Connexion en ligne active. Partage ce code à distance."
-      : "Astuce : ouvre 2 onglets pour tester localement.";
+    if (coopMode === "remote"){
+      hint.textContent = "Connexion en ligne active. Partage ce code à distance.";
+    } else {
+      hint.textContent = APP.store.defis.coopNotice
+        || "Mode local actif (même appareil). Pour jouer en ligne, démarre le serveur coop.";
+    }
   }
 
   const list = APP.$("lobbyPlayers");
@@ -561,6 +566,9 @@ APP.defis.hostCreate = async function(hostName){
   coopCode = code;
   coopTransport = transportOut.transport;
   coopMode = transportOut.mode;
+  if (coopMode === "local"){
+    APP.store.defis.coopNotice = "Mode local actif (même appareil). Pour jouer en ligne, démarre le serveur coop.";
+  }
 
   APP.store.defis.coopPlayers = [{
     name: APP.store.defis.coopHost,
@@ -635,20 +643,20 @@ APP.defis.joinCoop = async function(name, code){
   if (code.length !== 4) return { ok:false, error:"Code invalide." };
 
   let transportOut = null;
+  const localSession = localStorage.getItem(`ALPHABET_COOP_${code}`);
   try {
     transportOut = await APP.defis.connectCoopTransport({
       code,
       role: "join",
       name: name || "Joueur",
-      allowLocalFallback: true
+      allowLocalFallback: !!localSession
     });
   } catch (err) {
-    return { ok:false, error: err?.message || "Connexion coop impossible." };
+    return { ok:false, error: err?.message || "Connexion coop impossible (serveur requis pour jouer en ligne)." };
   }
 
   if (transportOut.mode === "local"){
-    const sess = localStorage.getItem(`ALPHABET_COOP_${code}`);
-    if (!sess){
+    if (!localSession){
       transportOut.transport.close();
       return { ok:false, error:"Aucune partie trouvée (multi-onglets requis en local)." };
     }
