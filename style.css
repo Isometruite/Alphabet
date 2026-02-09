@@ -125,8 +125,14 @@ body{
   background: #ffffff;
   cursor:pointer;
   text-align:left;
-  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, filter .12s ease;
   margin-bottom: 14px;
+  box-shadow: 0 12px 30px rgba(59,130,246,.28);
+}
+.defis-card:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+  filter: brightness(1.08);
 }
 .defis-card:hover{
   transform: translateY(-2px);
@@ -142,15 +148,15 @@ body{
   font-size:20px;
 }
 .defis-title{font-size:16px}
-.defis-sub{color:var(--muted);font-size:13px;margin-top:2px}
+.defis-sub{color:#e0f2fe;font-size:13px;margin-top:2px}
 .defis-tags{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .tag{
   font-size:12px;
-  border:1px solid #f3d7ac;
+  border:1px solid rgba(255,255,255,.55);
   border-radius:999px;
   padding:4px 8px;
-  color: #b45309;
-  background:#fffaf1;
+  color: #ffffff;
+  background:rgba(255,255,255,.2);
 }
 
 .main-btn{
