@@ -34,10 +34,14 @@ wss.on("connection", (ws, req) => {
     (url.searchParams.get("player") || "").trim() ||
     `p_${Math.random().toString(16).slice(2)}`;
 
-  if (!roomId) {
-    ws.close(1008, "Missing room");
-    return;
-  }
+if (!roomId) {
+  // Autorise une connexion "probe" (test) sans room
+  send(ws, { t: "server_ok" });
+  // On ne met pas ce client dans une room
+  ws.on("message", () => {});
+  return;
+}
+
 
   ws._roomId = roomId;
   ws._playerId = playerId;
