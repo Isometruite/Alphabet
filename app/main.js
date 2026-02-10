@@ -69,18 +69,20 @@ window.addEventListener("DOMContentLoaded", () => {
     APP.store.selectedMode = mode;
     APP.$("modeWords").classList.toggle("selected", mode === "words");
     APP.$("modeCountries").classList.toggle("selected", mode === "countries");
+    APP.$("modeDefis").classList.toggle("selected", mode === "defis");
   };
 
   setMode(APP.store.selectedMode || "words");
 
   APP.$("modeWords").onclick = () => setMode("words");
   APP.$("modeCountries").onclick = () => setMode("countries");
-  APP.$("modeDefis").onclick = () => APP.showScreen("defisHome");
+  APP.$("modeDefis").onclick = () => setMode("defis");
 
   APP.$("continueBtn").onclick = () => {
     if (APP.store.selectedMode === "words") APP.words.openLetters();
     else if (APP.store.selectedMode === "countries") APP.countries.start();
-    else APP.showScreen("defisHome");
+    else if (APP.store.selectedMode === "defis") APP.showScreen("defisHome");
+    else APP.showScreen("home");
   };
 
   // Navigation
