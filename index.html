@@ -52,10 +52,6 @@
         <button id="continueBtn" class="main-btn" type="button">Continuer →</button>
       </div>
     </div>
-    <div class="version-tools">
-      <div class="version-stamp" id="versionStamp" aria-hidden="true"></div>
-      <button id="wakeServerBtn" class="wake-server-btn" type="button" title="Réveiller le serveur coop">↻ serveur</button>
-    </div>
   </section>
 
   <!-- LETTERS -->
@@ -350,6 +346,12 @@
       <button class="secondary-btn" id="backFromFail" type="button">← Retour</button>
     </div>
   </section>
+
+  <!-- VERSION + SERVER CHECK (global pour toutes les pages) -->
+  <div class="version-tools" aria-live="polite">
+    <div class="version-stamp" id="versionStamp" aria-hidden="true"></div>
+    <button id="wakeServerBtn" class="wake-server-btn" type="button" title="Vérifier / réveiller le serveur coop">↻ serveur</button>
+  </div>
 
   <!-- DATA -->
   <script src="./data/Liste_mots_francais.js"></script>

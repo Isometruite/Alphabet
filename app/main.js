@@ -21,23 +21,41 @@ window.addEventListener("DOMContentLoaded", () => {
   setVersionStamp();
 
   const wakeServerBtn = APP.$("wakeServerBtn");
+  const SERVER_HEALTH_URL = "https://alphabet-5.onrender.com/health";
+  const setServerBtnState = (state) => {
+    if (!wakeServerBtn) return;
+    wakeServerBtn.dataset.state = state;
+    if (state === "up") wakeServerBtn.textContent = "✓ serveur";
+    else if (state === "down") wakeServerBtn.textContent = "↻ serveur";
+    else wakeServerBtn.textContent = "… serveur";
+  };
+
+  const checkServer = async () => {
+    if (!wakeServerBtn) return false;
+    setServerBtnState("checking");
+    try {
+      await fetch(SERVER_HEALTH_URL, { mode: "no-cors", cache: "no-store" });
+      setServerBtnState("up");
+      return true;
+    } catch (_err) {
+      setServerBtnState("down");
+      return false;
+    }
+  };
+
   if (wakeServerBtn) {
+    checkServer();
+    setInterval(checkServer, 45000);
+
     wakeServerBtn.onclick = async () => {
       wakeServerBtn.disabled = true;
-      const originalLabel = wakeServerBtn.textContent;
-      wakeServerBtn.textContent = "...";
-      try {
-        await fetch("https://alphabet-5.onrender.com/health", { mode: "no-cors", cache: "no-store" });
-        wakeServerBtn.textContent = "✓";
-      } catch (_err) {
-        wakeServerBtn.textContent = "↗";
-        window.open("https://alphabet-5.onrender.com/health", "_blank", "noopener,noreferrer");
-      } finally {
-        setTimeout(() => {
-          wakeServerBtn.disabled = false;
-          wakeServerBtn.textContent = originalLabel;
-        }, 1500);
+      const isUp = await checkServer();
+      if (!isUp) {
+        window.open(SERVER_HEALTH_URL, "_blank", "noopener,noreferrer");
       }
+      setTimeout(() => {
+        wakeServerBtn.disabled = false;
+      }, 1200);
     };
   }
 
