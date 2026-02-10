@@ -292,11 +292,11 @@ APP.defis.generateRounds = function(forceShuffle=false){
     text:`Trouve ${APP.defis.clampGoal(bMax,1)} mot en "B" en 45s`, goal: APP.defis.clampGoal(bMax,1), letter:"B", seconds:45 });
 
   const pMax = window.DATA.LISTE_PAYS_FRANCAIS.length;
-  pool.push({ type:"countries_any", icon:"🗺️", diff:"Moyen", diffClass:"diff-mid",
+  pool.push({ type:"countries_any", icon:"🗺️", diff:"Difficile", diffClass:"diff-hard",
     text:`Cite ${APP.defis.clampGoal(pMax,2)} pays`, goal: APP.defis.clampGoal(pMax,2) });
 
-  pool.push({ type:"countries_any", icon:"👑", diff:"BOSS", diffClass:"diff-boss",
-    text:`BOSS : Cite ${APP.defis.clampGoal(pMax,2)} pays sans erreur`, goal: APP.defis.clampGoal(pMax,2) });
+  pool.push({ type:"countries_any", icon:"👑", diff:"Extrême", diffClass:"diff-boss",
+    text:`Extrême : Cite ${APP.defis.clampGoal(pMax,2)} pays sans erreur`, goal: APP.defis.clampGoal(pMax,2) });
 
   if (forceShuffle) pool.sort(() => Math.random() - 0.5);
 
@@ -854,4 +854,3 @@ APP.defis.coopNextRound = function(){
   APP.store.defis.currentIndex = next;
   APP.defis.startCountdownAt(startAt, () => APP.defis.startRound(next, endAt));
 };
-
