@@ -382,13 +382,27 @@ APP.defis.generateRounds = function(forceShuffle=false){
       })
     ],
     extreme: [
-      () => makeLetterRound({ diff: "Extrême", diffClass: "diff-boss", icon: "👑", goal: 55, seconds: 60 }),
+      () => {
+        const letter = pickAllowedLetter();
+        const max = APP.defis.countWordsStarting(letter);
+        const goal = APP.defis.clampGoal(max, 55);
+        return {
+          type: "words_letter",
+          icon: "👑",
+          diff: "Extrême",
+          diffClass: "diff-boss",
+          text: `Trouve ${goal} mots en 60s avec la lettre "${letter}" (sauf Z, Y, X, W, U, K et Q)`,
+          goal,
+          letter,
+          seconds: 60
+        };
+      },
       () => ({
         type: "words_letter_minlen",
         icon: "🧠",
         diff: "Extrême",
         diffClass: "diff-boss",
-        text: "Trouve 7 mots de 9 lettres ou + d'une lettre autorisée",
+        text: "Trouve 7 mots de 9 lettres ou + d'une lettre autorisée (sauf Z, Y, X, W, U, K et Q)",
         goal: 7,
         minLen: 9,
         allowedLetters
