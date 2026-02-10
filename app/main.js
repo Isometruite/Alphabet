@@ -146,7 +146,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     setChoice(["defis5","defis10","defisInf"], "defis10");
     APP.store.defis.countChoice = 10;
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelNormal");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelNormal");
     APP.store.defis.levelChoice = "normal";
 
     APP.defis.generateRounds(false);
@@ -171,7 +171,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     setChoice(["defis5","defis10","defisInf"], "defis10");
     APP.store.defis.countChoice = 10;
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelNormal");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelNormal");
     APP.store.defis.levelChoice = "normal";
 
     setChoice(["p2","p3","p4"], "p2");
@@ -211,21 +211,27 @@ window.addEventListener("DOMContentLoaded", () => {
     APP.defis.renderRounds();
   };
 
+  APP.$("levelTest").onclick = () => {
+    APP.store.defis.levelChoice = "test";
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelTest");
+    APP.defis.generateRounds(false);
+    APP.defis.renderRounds();
+  };
   APP.$("levelBebe").onclick = () => {
     APP.store.defis.levelChoice = "bebe";
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelBebe");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelBebe");
     APP.defis.generateRounds(false);
     APP.defis.renderRounds();
   };
   APP.$("levelNormal").onclick = () => {
     APP.store.defis.levelChoice = "normal";
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelNormal");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelNormal");
     APP.defis.generateRounds(false);
     APP.defis.renderRounds();
   };
   APP.$("levelDemon").onclick = () => {
     APP.store.defis.levelChoice = "demon";
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelDemon");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelDemon");
     APP.defis.generateRounds(false);
     APP.defis.renderRounds();
   };
