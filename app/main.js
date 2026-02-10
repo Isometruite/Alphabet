@@ -20,6 +20,27 @@ window.addEventListener("DOMContentLoaded", () => {
 
   setVersionStamp();
 
+  const wakeServerBtn = APP.$("wakeServerBtn");
+  if (wakeServerBtn) {
+    wakeServerBtn.onclick = async () => {
+      wakeServerBtn.disabled = true;
+      const originalLabel = wakeServerBtn.textContent;
+      wakeServerBtn.textContent = "...";
+      try {
+        await fetch("https://alphabet-5.onrender.com/health", { mode: "no-cors", cache: "no-store" });
+        wakeServerBtn.textContent = "✓";
+      } catch (_err) {
+        wakeServerBtn.textContent = "↗";
+        window.open("https://alphabet-5.onrender.com/health", "_blank", "noopener,noreferrer");
+      } finally {
+        setTimeout(() => {
+          wakeServerBtn.disabled = false;
+          wakeServerBtn.textContent = originalLabel;
+        }, 1500);
+      }
+    };
+  }
+
   const setChoice = (ids, activeId) => {
     ids.forEach(id => {
       const el = APP.$(id);
