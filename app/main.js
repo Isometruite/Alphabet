@@ -4,6 +4,22 @@ window.addEventListener("DOMContentLoaded", () => {
   APP.initRouter();
   APP.ensureListsLoaded();
 
+  const setVersionStamp = () => {
+    const stamp = APP.$("versionStamp");
+    if (!stamp) return;
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, "0");
+    const version = [
+      now.getFullYear(),
+      pad(now.getMonth() + 1),
+      pad(now.getDate())
+    ].join("-");
+    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    stamp.textContent = `Version ${version} ${time}`;
+  };
+
+  setVersionStamp();
+
   const setChoice = (ids, activeId) => {
     ids.forEach(id => {
       const el = APP.$(id);
