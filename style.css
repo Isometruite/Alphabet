@@ -35,16 +35,37 @@ body{
   text-align:center;
 }
 
-.version-stamp{
+.version-tools{
   position: fixed;
   left: 12px;
   bottom: 12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.version-stamp{
   font-size: 11px;
   color: var(--muted);
   opacity: 0.6;
   letter-spacing: 0.2px;
-  pointer-events: none;
   user-select: none;
+}
+
+.wake-server-btn{
+  border:1px solid #d8e4ef;
+  background:#ffffff;
+  color:#64748b;
+  font-size:10px;
+  padding:2px 7px;
+  border-radius:999px;
+  opacity:.75;
+  cursor:pointer;
+}
+.wake-server-btn:hover{ opacity:1; }
+.wake-server-btn:disabled{
+  cursor:wait;
+  opacity:.55;
 }
 
 .logo{
