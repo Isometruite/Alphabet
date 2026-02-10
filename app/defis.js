@@ -407,6 +407,20 @@ APP.defis.openFail = function(text){
   APP.showScreen("defisFail");
 };
 
+APP.defis.finishRoundSuccess = function(text){
+  if (APP.store.defis.isCoop && APP.store.defis.isHost){
+    APP.defis.broadcast("ROUND_SUCCESS", { text });
+  }
+  APP.defis.openSuccess(text);
+};
+
+APP.defis.finishRoundFail = function(text){
+  if (APP.store.defis.isCoop && APP.store.defis.isHost){
+    APP.defis.broadcast("ROUND_FAIL", { text });
+  }
+  APP.defis.openFail(text);
+};
+
 // ---------- round start ----------
 APP.defis.startRound = function(index, endAt=null){
   APP.store.defis.currentIndex = index;
@@ -432,11 +446,8 @@ APP.defis.startRound = function(index, endAt=null){
 
   if (endAt){
     APP.defis.startTimerUntil(endAt, () => {
-      if (APP.store.defis.isCoop && APP.store.defis.isHost){
-        APP.defis.broadcast("ROUND_FAIL", { text:`Objectif non atteint : ${r.text}` });
-      }
-      if (!APP.store.defis.isCoop){
-        APP.defis.openFail(`Objectif non atteint : ${r.text}`);
+      if (!APP.store.defis.isCoop || APP.store.defis.isHost){
+        APP.defis.finishRoundFail(`Objectif non atteint : ${r.text}`);
       }
     });
     return;
@@ -509,11 +520,8 @@ APP.defis.submit = function(raw){
 
   const r = (APP.store.defis.rounds || [])[APP.store.defis.currentIndex];
   if ((APP.store.defis.found || []).length >= r.goal){
-    if (APP.store.defis.isCoop && APP.store.defis.isHost){
-      APP.defis.broadcast("ROUND_SUCCESS", { text:`Manche complétée : ${r.text}` });
-    }
-    if (!APP.store.defis.isCoop){
-      APP.defis.openSuccess(`Manche complétée : ${r.text}`);
+    if (!APP.store.defis.isCoop || APP.store.defis.isHost){
+      APP.defis.finishRoundSuccess(`Manche complétée : ${r.text}`);
     }
   }
 };
@@ -676,7 +684,7 @@ APP.defis.hostCreate = async function(hostName){
 
       const r = (APP.store.defis.rounds || [])[APP.store.defis.currentIndex];
       if ((APP.store.defis.found || []).length >= r.goal){
-        APP.defis.broadcast("ROUND_SUCCESS", { text:`Manche complétée : ${r.text}` });
+        APP.defis.finishRoundSuccess(`Manche complétée : ${r.text}`);
       }
     }
   };
