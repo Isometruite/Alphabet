@@ -282,6 +282,31 @@ APP.defis.countWordsStarting = function(letter){
 APP.defis.clampGoal = function(max, desired){ return max <= 0 ? 0 : Math.min(max, desired); };
 
 APP.defis.generateRounds = function(forceShuffle=false){
+  const n = (APP.store.defis.countChoice === Infinity) ? 10 : (APP.store.defis.countChoice || 10);
+  const level = APP.store.defis.levelChoice || "normal";
+
+  if (level === "test"){
+    const forbiddenLetters = new Set(["Z", "Y", "X", "W", "U", "K", "Q"]);
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      .split("")
+      .filter((letter) => !forbiddenLetters.has(letter));
+
+    const pool = letters.map((letter) => ({
+      type: "words_letter",
+      icon: "🧪",
+      diff: "Test",
+      diffClass: "diff-mid",
+      text: `Trouve 3 mots en "${letter}" en 20s`,
+      goal: 3,
+      letter,
+      seconds: 20
+    }));
+
+    if (forceShuffle) pool.sort(() => Math.random() - 0.5);
+    APP.store.defis.rounds = pool.slice(0, Math.min(n, pool.length));
+    return;
+  }
+
   const pool = [];
   const aMax = APP.defis.countWordsStarting("A");
   pool.push({ type:"words_letter", icon:"⏱️", diff:"Facile", diffClass:"diff-easy",
@@ -300,7 +325,6 @@ APP.defis.generateRounds = function(forceShuffle=false){
 
   if (forceShuffle) pool.sort(() => Math.random() - 0.5);
 
-  const n = (APP.store.defis.countChoice === Infinity) ? 10 : (APP.store.defis.countChoice || 10);
   APP.store.defis.rounds = pool.slice(0, Math.min(n, pool.length));
 };
 
