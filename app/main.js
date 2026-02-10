@@ -142,11 +142,30 @@ window.addEventListener("DOMContentLoaded", () => {
     APP.$("joinName").value = "";
     APP.$("joinCode").value = "";
     const joinServer = APP.$("joinServer");
-    if (joinServer) joinServer.value = localStorage.getItem("ALPHABET_COOP_WS") || "";
+    if (joinServer) joinServer.value = APP.defis.getCoopWsUrl() || APP.defis.getDefaultCoopWs();
     APP.$("joinFeedback").textContent = "";
     APP.showScreen("defisJoin");
     APP.$("joinName").focus();
   };
+
+  const setupCoopServerInput = (inputId) => {
+    const input = APP.$(inputId);
+    if (!input) return;
+
+    const current = APP.defis.getCoopWsUrl() || APP.defis.getDefaultCoopWs();
+    input.value = current;
+
+    const save = () => {
+      const normalized = APP.defis.setCoopWsOverride(input.value);
+      input.value = normalized || APP.defis.getDefaultCoopWs();
+    };
+
+    input.addEventListener("blur", save);
+    input.addEventListener("change", save);
+  };
+
+  setupCoopServerInput("joinServer");
+  setupCoopServerInput("coopServer");
 
   // Setup: count
   APP.$("defis5").onclick = () => {

@@ -6,6 +6,7 @@ let coopTransport = null;
 let coopCode = null;
 let coopStarted = false;
 let coopMode = "local";
+const DEFAULT_COOP_WS = "wss://alphabet-5.onrender.com/coop";
 
 const COLOR_PALETTE = ["#ef4444","#f97316","#eab308","#22c55e","#06b6d4","#3b82f6","#8b5cf6","#ec4899"];
 
@@ -52,11 +53,34 @@ APP.defis.makeCode4 = function(){
 
 APP.defis.getCoopWsUrl = function(){
   const override = window.APP_COOP_WS || localStorage.getItem("ALPHABET_COOP_WS");
-  if (override) return override;
-  if (location.protocol === "http:" || location.protocol === "https:"){
-    return `${location.origin.replace(/^http/, "ws")}/coop`;
+  if (override) return APP.defis.normalizeCoopWsUrl(override);
+  return DEFAULT_COOP_WS;
+};
+
+APP.defis.normalizeCoopWsUrl = function(rawUrl){
+  const raw = (rawUrl || "").trim();
+  if (!raw) return "";
+
+  let normalized = raw.replace(/^http:/i, "ws:").replace(/^https:/i, "wss:");
+  if (!/^wss?:\/\//i.test(normalized)) return "";
+
+  normalized = normalized.replace(/\/+$/, "");
+  if (!/\/coop$/i.test(normalized)) normalized = `${normalized}/coop`;
+  return normalized;
+};
+
+APP.defis.setCoopWsOverride = function(rawUrl){
+  const normalized = APP.defis.normalizeCoopWsUrl(rawUrl);
+  if (!normalized){
+    localStorage.removeItem("ALPHABET_COOP_WS");
+    return "";
   }
-  return null;
+  localStorage.setItem("ALPHABET_COOP_WS", normalized);
+  return normalized;
+};
+
+APP.defis.getDefaultCoopWs = function(){
+  return DEFAULT_COOP_WS;
 };
 
 APP.defis.createBroadcastTransport = function(code){
@@ -73,8 +97,7 @@ APP.defis.createBroadcastTransport = function(code){
 APP.defis.createWebSocketTransport = function(wsUrl, code, role, name){
   return new Promise((resolve, reject) => {
     let settled = false;
-      const WS_BASE = "wss://alphabet-5.onrender.com";
-      const ws = new WebSocket(`${WS_BASE}/coop?room=${encodeURIComponent(roomId)}&player=${encodeURIComponent(playerId)}`);
+    const ws = new WebSocket(wsUrl);
 
 
     const timeout = setTimeout(() => {
