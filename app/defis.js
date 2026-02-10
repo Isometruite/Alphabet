@@ -6,7 +6,7 @@ let coopTransport = null;
 let coopCode = null;
 let coopStarted = false;
 let coopMode = "local";
-const LEGACY_COOP_WS = "wss://alphabet-5.onrender.com/coop";
+const DEFAULT_COOP_SERVER = "wss://alphabet-5.onrender.com";
 
 const COLOR_PALETTE = ["#ef4444","#f97316","#eab308","#22c55e","#06b6d4","#3b82f6","#8b5cf6","#ec4899"];
 
@@ -62,20 +62,10 @@ APP.defis.getCoopWsUrls = function(){
   };
 
   const override = window.APP_COOP_WS || localStorage.getItem("ALPHABET_COOP_WS");
-  if (override) pushUrl(override);
+  pushUrl(override || DEFAULT_COOP_SERVER);
 
-  const { protocol, hostname, port } = window.location || {};
-  if (hostname){
-    const wsProto = protocol === "https:" ? "wss" : "ws";
-    const hostWithPort = port ? `${hostname}:${port}` : hostname;
-    pushUrl(`${wsProto}://${hostWithPort}/coop`);
-
-    if (port !== "8080"){
-      pushUrl(`${wsProto}://${hostname}:8080/coop`);
-    }
-  }
-
-  pushUrl(LEGACY_COOP_WS);
+  // Compat: conserve l'ancien endpoint avec /coop explicite.
+  pushUrl("wss://alphabet-5.onrender.com/coop");
   return urls;
 };
 
