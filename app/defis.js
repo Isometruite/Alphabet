@@ -619,6 +619,12 @@ APP.defis.startRound = function(index, endAt=null){
   APP.$("defisRoundDesc").textContent = r.text;
   APP.$("defisChip").textContent = r.icon || "⚡";
 
+  const diffEl = APP.$("defisRoundDiff");
+  if (diffEl){
+    diffEl.textContent = `● ${r.diff || "-"}`;
+    diffEl.className = `badge-diff ${r.diffClass || ""}`.trim();
+  }
+
   APP.defis.updateRoundProgress(r.goal);
   APP.defis.renderFoundList();
   APP.showScreen("defisPlay");

@@ -538,6 +538,11 @@ body{
   justify-content:space-between;
   align-items:flex-start;
 }
+.round-title-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 .timer-box{
   border:1px solid #e8eff6;
   border-radius: 16px;
