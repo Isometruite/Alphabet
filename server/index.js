@@ -24,8 +24,11 @@ function getRoom(roomId) {
 }
 
 function send(ws, obj) {
-  if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
+  if (ws.readyState === 1) { // 1 = OPEN
+    ws.send(JSON.stringify(obj));
+  }
 }
+
 
 wss.on("connection", (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
