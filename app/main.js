@@ -141,6 +141,8 @@ window.addEventListener("DOMContentLoaded", () => {
     APP.store.defis.isCoop = true;
     APP.$("joinName").value = "";
     APP.$("joinCode").value = "";
+    const joinServer = APP.$("joinServer");
+    if (joinServer) joinServer.value = localStorage.getItem("ALPHABET_COOP_WS") || "";
     APP.$("joinFeedback").textContent = "";
     APP.showScreen("defisJoin");
     APP.$("joinName").focus();
