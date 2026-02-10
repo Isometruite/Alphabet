@@ -21,23 +21,41 @@ window.addEventListener("DOMContentLoaded", () => {
   setVersionStamp();
 
   const wakeServerBtn = APP.$("wakeServerBtn");
+  const SERVER_HEALTH_URL = "https://alphabet-5.onrender.com/health";
+  const setServerBtnState = (state) => {
+    if (!wakeServerBtn) return;
+    wakeServerBtn.dataset.state = state;
+    if (state === "up") wakeServerBtn.textContent = "✓ serveur";
+    else if (state === "down") wakeServerBtn.textContent = "↻ serveur";
+    else wakeServerBtn.textContent = "… serveur";
+  };
+
+  const checkServer = async () => {
+    if (!wakeServerBtn) return false;
+    setServerBtnState("checking");
+    try {
+      await fetch(SERVER_HEALTH_URL, { mode: "no-cors", cache: "no-store" });
+      setServerBtnState("up");
+      return true;
+    } catch (_err) {
+      setServerBtnState("down");
+      return false;
+    }
+  };
+
   if (wakeServerBtn) {
+    checkServer();
+    setInterval(checkServer, 45000);
+
     wakeServerBtn.onclick = async () => {
       wakeServerBtn.disabled = true;
-      const originalLabel = wakeServerBtn.textContent;
-      wakeServerBtn.textContent = "...";
-      try {
-        await fetch("https://alphabet-5.onrender.com/health", { mode: "no-cors", cache: "no-store" });
-        wakeServerBtn.textContent = "✓";
-      } catch (_err) {
-        wakeServerBtn.textContent = "↗";
-        window.open("https://alphabet-5.onrender.com/health", "_blank", "noopener,noreferrer");
-      } finally {
-        setTimeout(() => {
-          wakeServerBtn.disabled = false;
-          wakeServerBtn.textContent = originalLabel;
-        }, 1500);
+      const isUp = await checkServer();
+      if (!isUp) {
+        window.open(SERVER_HEALTH_URL, "_blank", "noopener,noreferrer");
       }
+      setTimeout(() => {
+        wakeServerBtn.disabled = false;
+      }, 1200);
     };
   }
 
@@ -128,7 +146,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     setChoice(["defis5","defis10","defisInf"], "defis10");
     APP.store.defis.countChoice = 10;
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelNormal");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelNormal");
     APP.store.defis.levelChoice = "normal";
 
     APP.defis.generateRounds(false);
@@ -153,7 +171,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     setChoice(["defis5","defis10","defisInf"], "defis10");
     APP.store.defis.countChoice = 10;
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelNormal");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelNormal");
     APP.store.defis.levelChoice = "normal";
 
     setChoice(["p2","p3","p4"], "p2");
@@ -195,19 +213,25 @@ window.addEventListener("DOMContentLoaded", () => {
 
   APP.$("levelBebe").onclick = () => {
     APP.store.defis.levelChoice = "bebe";
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelBebe");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelBebe");
     APP.defis.generateRounds(false);
     APP.defis.renderRounds();
   };
   APP.$("levelNormal").onclick = () => {
     APP.store.defis.levelChoice = "normal";
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelNormal");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelNormal");
+    APP.defis.generateRounds(false);
+    APP.defis.renderRounds();
+  };
+  APP.$("levelTest").onclick = () => {
+    APP.store.defis.levelChoice = "test";
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelTest");
     APP.defis.generateRounds(false);
     APP.defis.renderRounds();
   };
   APP.$("levelDemon").onclick = () => {
     APP.store.defis.levelChoice = "demon";
-    setChoice(["levelBebe","levelNormal","levelDemon"], "levelDemon");
+    setChoice(["levelTest","levelBebe","levelNormal","levelDemon"], "levelDemon");
     APP.defis.generateRounds(false);
     APP.defis.renderRounds();
   };

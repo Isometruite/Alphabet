@@ -52,10 +52,6 @@
         <button id="continueBtn" class="main-btn" type="button">Continuer →</button>
       </div>
     </div>
-    <div class="version-tools">
-      <div class="version-stamp" id="versionStamp" aria-hidden="true"></div>
-      <button id="wakeServerBtn" class="wake-server-btn" type="button" title="Réveiller le serveur coop">↻ serveur</button>
-    </div>
   </section>
 
   <!-- LETTERS -->
@@ -186,7 +182,6 @@
           <input id="joinCode" type="text" placeholder="AB12" maxlength="4" />
         </label>
 
-        <p class="muted">Serveur coop configuré automatiquement.</p>
       </div>
 
       <p id="joinFeedback" class="feedback"></p>
@@ -212,7 +207,6 @@
           <input id="teamName" type="text" placeholder="Les Champions..." />
         </label>
 
-        <p class="muted">Serveur coop configuré automatiquement.</p>
       </div>
 
       <div class="section-title">Nombre de défis</div>
@@ -224,6 +218,7 @@
 
       <div class="section-title">Difficulté</div>
       <div class="choice-row">
+        <button class="pill-btn" id="levelTest" type="button">Test</button>
         <button class="pill-btn" id="levelBebe" type="button">Bébé</button>
         <button class="pill-btn selected" id="levelNormal" type="button">Normal</button>
         <button class="pill-btn" id="levelDemon" type="button">Démon</button>
@@ -352,6 +347,12 @@
       <button class="secondary-btn" id="backFromFail" type="button">← Retour</button>
     </div>
   </section>
+
+  <!-- VERSION + SERVER CHECK (global pour toutes les pages) -->
+  <div class="version-tools" aria-live="polite">
+    <div class="version-stamp" id="versionStamp" aria-hidden="true"></div>
+    <button id="wakeServerBtn" class="wake-server-btn" type="button" title="Vérifier / réveiller le serveur coop">↻ serveur</button>
+  </div>
 
   <!-- DATA -->
   <script src="./data/Liste_mots_francais.js"></script>
