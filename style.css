@@ -67,6 +67,18 @@ body{
   cursor:wait;
   opacity:.55;
 }
+.wake-server-btn[data-state="up"]{
+  border-color:#bbf7d0;
+  color:#15803d;
+}
+.wake-server-btn[data-state="down"]{
+  border-color:#fecaca;
+  color:#b91c1c;
+}
+.wake-server-btn[data-state="checking"]{
+  border-color:#bfdbfe;
+  color:#1d4ed8;
+}
 
 .logo{
   font-size: 52px;
