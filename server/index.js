@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
   res.end("Alphabet WS server running");
 });
 
-const wss = new WebSocketServer({ server, path: "/coop" });
+const wss = new WebSocketServer({ server });
 
 // roomId -> Set of sockets
 const rooms = new Map();
@@ -29,22 +29,25 @@ function send(ws, obj) {
   }
 }
 
-
 wss.on("connection", (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
+
+  // S'assure qu'on est bien sur /coop (évite /coop/ ou /coop/coop selon ton front)
+  if (url.pathname !== "/coop") {
+    ws.close(1008, "Wrong path");
+    return;
+  }
+
   const roomId = (url.searchParams.get("room") || "").trim();
   const playerId =
     (url.searchParams.get("player") || "").trim() ||
     `p_${Math.random().toString(16).slice(2)}`;
 
-if (!roomId) {
-  // Autorise une connexion "probe" (test) sans room
-  send(ws, { t: "server_ok" });
-  // On ne met pas ce client dans une room
-  ws.on("message", () => {});
-  return;
-}
-
+  if (!roomId) {
+    // Autorise une connexion "probe" (test) sans room
+    send(ws, { t: "server_ok" });
+    return;
+  }
 
   ws._roomId = roomId;
   ws._playerId = playerId;
@@ -52,7 +55,6 @@ if (!roomId) {
   const room = getRoom(roomId);
   room.add(ws);
 
-  // tell the new client who is here
   send(ws, {
     t: "welcome",
     room: roomId,
@@ -60,7 +62,6 @@ if (!roomId) {
     peers: [...room].filter(x => x !== ws).map(x => x._playerId)
   });
 
-  // notify others
   for (const peer of room) {
     if (peer !== ws) send(peer, { t: "peer_join", player: playerId });
   }
@@ -69,7 +70,6 @@ if (!roomId) {
     let msg;
     try { msg = JSON.parse(raw.toString()); } catch { return; }
 
-    // broadcast in room
     for (const peer of room) {
       if (peer === ws) continue;
       send(peer, { ...msg, _from: playerId });
