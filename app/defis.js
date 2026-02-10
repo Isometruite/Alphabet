@@ -23,6 +23,7 @@ APP.store.defis.coopNotice = "";
 
 APP.store.defis.expectedPlayers = APP.store.defis.expectedPlayers ?? 2;
 APP.store.defis.countChoice = APP.store.defis.countChoice ?? 10;
+APP.store.defis.levelChoice = APP.store.defis.levelChoice || "normal";
 
 APP.store.defis.rounds = APP.store.defis.rounds || [];
 APP.store.defis.currentIndex = APP.store.defis.currentIndex || 0;
