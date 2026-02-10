@@ -1,392 +1,198 @@
 window.DATA = window.DATA || {};
 window.DATA.LISTE_PAYS_FRANCAIS = `
 Afghanistan
-
 Afrique du Sud
-
 Albanie
-
 Algérie
-
 Allemagne
-
 Andorre
-
 Angola
-
-Antigua-et-Barbuda
-
-Arabie Saoudite
-
+Antigua et Barbuda
+Arabie saoudite
 Argentine
-
 Arménie
-
+Aruba
 Australie
-
 Autriche
-
 Azerbaïdjan
-
 Bahamas
-
 Bahreïn
-
 Bangladesh
-
 Barbade
-
-Belau
-
 Belgique
-
 Belize
-
 Bénin
-
 Bhoutan
-
 Biélorussie
-
-Birmanie
-
 Bolivie
-
-Bosnie-Herzégovine
-
+Bosnie Herzégovine
 Botswana
-
 Brésil
-
 Brunei
-
 Bulgarie
-
 Burkina Faso
-
 Burundi
-
 Cambodge
-
 Cameroun
-
 Canada
-
-Cap-Vert
-
-Centrafrique
-
+Cap Vert
 Chili
-
 Chine
-
 Chypre
-
 Colombie
-
 Comores
-
-Congo-Brazzaville
-
-Congo-Kinshasa ou RDC
-
+Congo
 Corée du Nord
-
 Corée du Sud
-
 Costa Rica
-
-Côte d’Ivoire
-
+Côte d'Ivoire
 Croatie
-
 Cuba
-
 Danemark
-
 Djibouti
-
 Dominique
-
 Égypte
-
 Émirats arabes unis
-
 Équateur
-
 Érythrée
-
 Espagne
-
 Estonie
-
-États-Unis
-
+Eswatini
+États Unis
 Éthiopie
-
-Fidji (îles)
-
+Fidji
 Finlande
-
 France
-
 Gabon
-
 Gambie
-
 Géorgie
-
 Ghana
-
 Grèce
-
 Grenade
-
 Guatemala
-
-Guinée-Bissau
-
-Guinée-Conakry
-
+Guinée
+Guinée Bissau
 Guinée équatoriale
-
 Guyana
-
 Haïti
-
 Honduras
-
 Hongrie
-
 Inde
-
 Indonésie
-
 Irak
-
 Iran
-
 Irlande
-
 Islande
-
 Israël
-
 Italie
-
 Jamaïque
-
 Japon
-
 Jordanie
-
 Kazakhstan
-
 Kenya
-
 Kirghizistan
-
 Kiribati
-
-Kosovo
-
 Koweït
-
 Laos
-
 Lesotho
-
 Lettonie
-
 Liban
-
-Liberia
-
+Libéria
 Libye
-
 Liechtenstein
-
 Lituanie
-
 Luxembourg
-
-Macédoine
-
+Macédoine du Nord
 Madagascar
-
 Malaisie
-
 Malawi
-
 Maldives
-
 Mali
-
 Malte
-
 Maroc
-
 Marshall
-
 Maurice
-
 Mauritanie
-
 Mexique
-
 Micronésie
-
 Moldavie
-
 Monaco
-
 Mongolie
-
 Monténégro
-
 Mozambique
-
+Myanmar
 Namibie
-
 Nauru
-
 Népal
-
 Nicaragua
-
 Niger
-
-Nigeria
-
+Nigéria
 Norvège
-
-Nouvelle-Zélande
-
+Nouvelle Zélande
 Oman
-
 Ouganda
-
 Ouzbékistan
-
 Pakistan
-
+Palaos
+Palestine
 Panama
-
-Papouasie-Nouvelle-Guinée
-
+Papouasie Nouvelle Guinée
 Paraguay
-
-Pays-Bas
-
+Pays Bas
 Pérou
-
 Philippines
-
 Pologne
-
 Portugal
-
 Qatar
-
+République centrafricaine
 République dominicaine
-
 République tchèque
-
 Roumanie
-
-Royaume-Uni
-
+Royaume Uni
 Russie
-
 Rwanda
-
-Saint-Christophe-et-Niévès
-
-Sainte-Lucie
-
-Saint-Marin
-
-Saint-Vincent-et-les-Grenadines
-
-Salomon (îles)
-
-São-Tomé-et-Príncipe
-
+Saint Christophe et Niévès
+Saint Marin
+Saint Vincent et les Grenadines
+Sainte Lucie
+Salomon
 Salvador
-
-Samoa occidentales
-
+Samoa
+Sao Tomé et Principe
 Sénégal
-
 Serbie
-
 Seychelles
-
 Sierra Leone
-
 Singapour
-
 Slovaquie
-
 Slovénie
-
 Somalie
-
 Soudan
-
 Soudan du Sud
-
 Sri Lanka
-
 Suède
-
 Suisse
-
-Surinam
-
-Swaziland
-
+Suriname
 Syrie
-
 Tadjikistan
-
 Tanzanie
-
 Tchad
-
-Timor oriental
-
 Thaïlande
-
+Timor oriental
 Togo
-
 Tonga
-
-Trinité-et-Tobago
-
+Trinité et Tobago
 Tunisie
-
 Turkménistan
-
 Turquie
-
 Tuvalu
-
 Ukraine
-
 Uruguay
-
 Vanuatu
-
 Vatican
-
 Venezuela
-
 Vietnam
-
 Yémen
-
 Zambie
-
 Zimbabwe
 `.trim().split(/\r?\n/).map(s => s.trim()).filter(Boolean);
