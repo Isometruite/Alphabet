@@ -69,18 +69,15 @@ APP.defis.normalizeCoopWsUrl = function(rawUrl){
   return normalized;
 };
 
-APP.defis.setCoopWsOverride = function(rawUrl){
-  const normalized = APP.defis.normalizeCoopWsUrl(rawUrl);
-  if (!normalized){
-    localStorage.removeItem("ALPHABET_COOP_WS");
-    return "";
-  }
-  localStorage.setItem("ALPHABET_COOP_WS", normalized);
-  return normalized;
-};
+APP.defis.sanitizeServerErrorMessage = function(rawMessage){
+  const msg = (rawMessage || "").trim();
+  if (!msg) return "Connexion refusée par le serveur coop.";
 
-APP.defis.getDefaultCoopWs = function(){
-  return DEFAULT_COOP_WS;
+  if (/roomid\s+is\s+not\s+defined/i.test(msg)){
+    return "Serveur coop incompatible. Réessaie dans quelques secondes.";
+  }
+
+  return msg;
 };
 
 APP.defis.createBroadcastTransport = function(code){
@@ -151,7 +148,10 @@ APP.defis.createWebSocketTransport = function(wsUrl, code, role, name){
         settled = true;
         clearTimeout(timeout);
         ws.close();
-        reject({ code: msg.payload?.code || "HELLO_ERR", message: msg.payload?.message || "Connexion refusée." });
+        reject({
+          code: msg.payload?.code || "HELLO_ERR",
+          message: APP.defis.sanitizeServerErrorMessage(msg.payload?.message)
+        });
       }
     };
 
