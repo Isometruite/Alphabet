@@ -311,6 +311,22 @@ APP.defis.generateRounds = function(forceShuffle=false){
     };
   };
 
+  const makeTestRound = () => {
+    const letter = pickAllowedLetter();
+    const max = APP.defis.countWordsStarting(letter);
+    const goal = APP.defis.clampGoal(max, 3);
+    return {
+      type: "words_letter",
+      icon: "🧪",
+      diff: "Test",
+      diffClass: "diff-easy",
+      text: `Trouve ${goal} mots qui commencent par "${letter}" en 20s (sauf Z, Y, X, W, U, K et Q)`,
+      goal,
+      letter,
+      seconds: 20
+    };
+  };
+
   const mediumExactRound = {
     type: "words_letter_exact_lengths",
     icon: "📏",
@@ -411,6 +427,10 @@ APP.defis.generateRounds = function(forceShuffle=false){
   };
 
   const targetByLevel = {
+    test: {
+      5: { facile: 5, moyen: 0, difficile: 0, extreme: 0 },
+      10: { facile: 10, moyen: 0, difficile: 0, extreme: 0 }
+    },
     bebe: {
       5: { facile: 2, moyen: 2, difficile: 1, extreme: 0 },
       10: { facile: 5, moyen: 4, difficile: 1, extreme: 0 }
@@ -446,6 +466,12 @@ APP.defis.generateRounds = function(forceShuffle=false){
       rounds.push(round);
     }
   };
+
+  if (level === "test"){
+    for (let i = 0; i < n; i++) rounds.push(makeTestRound());
+    APP.store.defis.rounds = rounds.slice(0, n);
+    return;
+  }
 
   // Ordre strict de difficulté
   buildFromTier("facile", dist.facile);
