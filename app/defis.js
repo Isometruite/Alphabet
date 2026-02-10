@@ -23,6 +23,7 @@ APP.store.defis.coopNotice = "";
 
 APP.store.defis.expectedPlayers = APP.store.defis.expectedPlayers ?? 2;
 APP.store.defis.countChoice = APP.store.defis.countChoice ?? 10;
+APP.store.defis.levelChoice = APP.store.defis.levelChoice || "normal";
 
 APP.store.defis.rounds = APP.store.defis.rounds || [];
 APP.store.defis.currentIndex = APP.store.defis.currentIndex || 0;
@@ -280,27 +281,165 @@ APP.defis.countWordsStarting = function(letter){
 };
 APP.defis.clampGoal = function(max, desired){ return max <= 0 ? 0 : Math.min(max, desired); };
 
+APP.defis.LETTERS_COMMON = "ABCDEFGHIJKLMNOPRSTV".split("");
+APP.defis.LETTERS_RARE = "WXYZ".split("");
+APP.defis.TWO_LETTER_COMBOS = ["BA","CO","PE","NI","MA","RE","DE","SA","LA","PA","PO","MO","CA","NO","MI"];
+
+APP.defis.pickRandom = function(list){
+  if (!Array.isArray(list) || !list.length) return "";
+  return list[Math.floor(Math.random() * list.length)];
+};
+
+APP.defis.pickLetterWithMinWords = function(letters, minWords){
+  const eligible = (letters || []).filter((letter) => APP.defis.countWordsStarting(letter) >= minWords);
+  return APP.defis.pickRandom(eligible.length ? eligible : letters);
+};
+
+APP.defis.countWordsByRule = function(predicate){
+  return window.DATA.LISTE_MOTS_FRANCAIS.filter(w => predicate(APP.normalizeText(w))).length;
+};
+
+APP.defis.makeWordsLetterRound = function({ diff, diffClass, goal, letter, seconds, minLen, maxLen, exactLen, allowedLengths }){
+  const hasRule = typeof minLen === "number" || typeof maxLen === "number" || typeof exactLen === "number" || (Array.isArray(allowedLengths) && allowedLengths.length);
+  const maxCount = APP.defis.countWordsByRule((entry) => {
+    if (!entry.startsWith(APP.normalizeText(letter))) return false;
+    const len = entry.length;
+    if (typeof exactLen === "number" && len !== exactLen) return false;
+    if (Array.isArray(allowedLengths) && allowedLengths.length && !allowedLengths.includes(len)) return false;
+    if (typeof minLen === "number" && len < minLen) return false;
+    if (typeof maxLen === "number" && len > maxLen) return false;
+    return true;
+  });
+
+  let desc = `Trouve ${APP.defis.clampGoal(maxCount, goal)} mots en "${letter}"`;
+  if (typeof exactLen === "number") desc += ` de exactement ${exactLen} lettres`;
+  else if (Array.isArray(allowedLengths) && allowedLengths.length) desc += ` de exactement ${allowedLengths.join(", ")} lettres`;
+  else if (typeof minLen === "number" && typeof maxLen === "number") desc += ` de ${minLen} à ${maxLen} lettres`;
+  else if (typeof minLen === "number") desc += ` de ${minLen} lettres et +`;
+  else if (typeof maxLen === "number") desc += ` de max ${maxLen} lettres`;
+  if (seconds) desc += ` en ${seconds}s`;
+
+  return {
+    type: "words_letter",
+    icon: seconds ? "⏱️" : "✍️",
+    diff,
+    diffClass,
+    text: desc,
+    goal: APP.defis.clampGoal(maxCount, goal),
+    letter,
+    seconds: seconds || null,
+    minLen,
+    maxLen,
+    exactLen,
+    allowedLengths: Array.isArray(allowedLengths) ? allowedLengths : null,
+    hasRule
+  };
+};
+
+APP.defis.makeWordsPairRound = function({ diff, diffClass, goal, prefix }){
+  const maxCount = APP.defis.countWordsByRule((entry) => entry.startsWith(APP.normalizeText(prefix)));
+  return {
+    type: "words_prefix",
+    icon: "🔤",
+    diff,
+    diffClass,
+    text: `Trouve ${APP.defis.clampGoal(maxCount, goal)} mots qui commencent par "${prefix.toLowerCase()}"`,
+    goal: APP.defis.clampGoal(maxCount, goal),
+    prefix,
+    seconds: null
+  };
+};
+
+APP.defis.makeWordsRareRound = function(){
+  const maxCount = APP.defis.countWordsByRule((entry) => APP.defis.LETTERS_RARE.some(letter => entry.startsWith(letter)));
+  return {
+    type: "words_rare_letters",
+    icon: "🔥",
+    diff: "Extreme",
+    diffClass: "diff-boss",
+    text: `Trouve ${APP.defis.clampGoal(maxCount, 20)} mots en 60s qui commencent par W, X, Y ou Z`,
+    goal: APP.defis.clampGoal(maxCount, 20),
+    seconds: 60
+  };
+};
+
+APP.defis.buildRoundByDifficulty = function(diff){
+  if (diff === "easy"){
+    const type = APP.defis.pickRandom(["timer_letter", "short_letter", "prefix_pair"]);
+    if (type === "timer_letter"){
+      const letter = APP.defis.pickLetterWithMinWords(APP.defis.LETTERS_COMMON, 30);
+      return APP.defis.makeWordsLetterRound({ diff:"Facile", diffClass:"diff-easy", goal:30, letter, seconds:120 });
+    }
+    if (type === "short_letter"){
+      const letter = APP.defis.pickLetterWithMinWords(APP.defis.LETTERS_COMMON, 15);
+      return APP.defis.makeWordsLetterRound({ diff:"Facile", diffClass:"diff-easy", goal:15, letter, maxLen:5 });
+    }
+    const prefix = APP.defis.pickRandom(APP.defis.TWO_LETTER_COMBOS);
+    return APP.defis.makeWordsPairRound({ diff:"Facile", diffClass:"diff-easy", goal:25, prefix });
+  }
+
+  if (diff === "mid"){
+    const type = APP.defis.pickRandom(["timer_letter", "countries", "length_mix"]);
+    if (type === "timer_letter"){
+      const letter = APP.defis.pickLetterWithMinWords(APP.defis.LETTERS_COMMON, 40);
+      return APP.defis.makeWordsLetterRound({ diff:"Moyen", diffClass:"diff-mid", goal:40, letter, seconds:90 });
+    }
+    if (type === "countries"){
+      const pMax = window.DATA.LISTE_PAYS_FRANCAIS.length;
+      return { type:"countries_any", icon:"🗺️", diff:"Moyen", diffClass:"diff-mid", text:`Cite ${APP.defis.clampGoal(pMax,15)} pays`, goal: APP.defis.clampGoal(pMax,15) };
+    }
+    const letter = APP.defis.pickLetterWithMinWords(APP.defis.LETTERS_COMMON, 10);
+    return APP.defis.makeWordsLetterRound({ diff:"Moyen", diffClass:"diff-mid", goal:10, letter, allowedLengths:[4,5,6,7] });
+  }
+
+  if (diff === "hard"){
+    const type = APP.defis.pickRandom(["timer_letter", "long_letter", "rare_combo"]);
+    if (type === "timer_letter"){
+      const letter = APP.defis.pickLetterWithMinWords(APP.defis.LETTERS_COMMON, 50);
+      return APP.defis.makeWordsLetterRound({ diff:"Difficile", diffClass:"diff-hard", goal:50, letter, seconds:75 });
+    }
+    if (type === "long_letter"){
+      const letter = APP.defis.pickLetterWithMinWords(APP.defis.LETTERS_COMMON, 15);
+      return APP.defis.makeWordsLetterRound({ diff:"Difficile", diffClass:"diff-hard", goal:15, letter, minLen:7, seconds:60 });
+    }
+    return APP.defis.makeWordsRareRound();
+  }
+
+  const letter = APP.defis.pickLetterWithMinWords(APP.defis.LETTERS_COMMON, 7);
+  return APP.defis.makeWordsLetterRound({ diff:"Extreme", diffClass:"diff-boss", goal:7, letter, minLen:9 });
+};
+
+APP.defis.getDifficultyMix = function(level, countChoice){
+  const count = countChoice === 5 ? 5 : 10;
+  const mixes = {
+    bebe: {
+      5: { easy:2, mid:2, hard:1, extreme:0 },
+      10: { easy:5, mid:4, hard:1, extreme:0 }
+    },
+    normal: {
+      5: { easy:1, mid:2, hard:1, extreme:1 },
+      10: { easy:2, mid:3, hard:3, extreme:2 }
+    },
+    demon: {
+      5: { easy:0, mid:1, hard:2, extreme:2 },
+      10: { easy:0, mid:2, hard:4, extreme:4 }
+    }
+  };
+  return mixes[level]?.[count] || mixes.normal[count];
+};
+
 APP.defis.generateRounds = function(forceShuffle=false){
+  const level = APP.store.defis.levelChoice || "normal";
+  const countChoice = (APP.store.defis.countChoice === Infinity) ? 10 : (APP.store.defis.countChoice || 10);
+  const mix = APP.defis.getDifficultyMix(level, countChoice);
   const pool = [];
-  const aMax = APP.defis.countWordsStarting("A");
-  pool.push({ type:"words_letter", icon:"⏱️", diff:"Facile", diffClass:"diff-easy",
-    text:`Trouve ${APP.defis.clampGoal(aMax,2)} mots en "A" en 60s`, goal: APP.defis.clampGoal(aMax,2), letter:"A", seconds:60 });
 
-  const bMax = APP.defis.countWordsStarting("B");
-  pool.push({ type:"words_letter", icon:"⏱️", diff:"Moyen", diffClass:"diff-mid",
-    text:`Trouve ${APP.defis.clampGoal(bMax,1)} mot en "B" en 45s`, goal: APP.defis.clampGoal(bMax,1), letter:"B", seconds:45 });
+  Object.entries(mix).forEach(([diff, count]) => {
+    for (let i=0; i<count; i++) pool.push(APP.defis.buildRoundByDifficulty(diff));
+  });
 
-  const pMax = window.DATA.LISTE_PAYS_FRANCAIS.length;
-  pool.push({ type:"countries_any", icon:"🗺️", diff:"Moyen", diffClass:"diff-mid",
-    text:`Cite ${APP.defis.clampGoal(pMax,2)} pays`, goal: APP.defis.clampGoal(pMax,2) });
-
-  pool.push({ type:"countries_any", icon:"👑", diff:"BOSS", diffClass:"diff-boss",
-    text:`BOSS : Cite ${APP.defis.clampGoal(pMax,2)} pays sans erreur`, goal: APP.defis.clampGoal(pMax,2) });
-
-  if (forceShuffle) pool.sort(() => Math.random() - 0.5);
-
-  const n = (APP.store.defis.countChoice === Infinity) ? 10 : (APP.store.defis.countChoice || 10);
-  APP.store.defis.rounds = pool.slice(0, Math.min(n, pool.length));
+  pool.sort(() => Math.random() - 0.5);
+  APP.store.defis.rounds = pool;
 };
 
 APP.defis.renderRounds = function(){
@@ -466,6 +605,29 @@ APP.defis.validateEntryForRound = function(raw){
     if (r.type === "words_letter" && r.letter){
       if (!entryN.startsWith(APP.normalizeText(r.letter))){
         return { ok:false, type:"err", msg:`Le mot doit commencer par "${r.letter}".` };
+      }
+      const len = entryN.length;
+      if (typeof r.exactLen === "number" && len !== r.exactLen){
+        return { ok:false, type:"err", msg:`Le mot doit faire exactement ${r.exactLen} lettres.` };
+      }
+      if (Array.isArray(r.allowedLengths) && r.allowedLengths.length && !r.allowedLengths.includes(len)){
+        return { ok:false, type:"err", msg:`Le mot doit faire ${r.allowedLengths.join(", ")} lettres.` };
+      }
+      if (typeof r.minLen === "number" && len < r.minLen){
+        return { ok:false, type:"err", msg:`Le mot doit faire au moins ${r.minLen} lettres.` };
+      }
+      if (typeof r.maxLen === "number" && len > r.maxLen){
+        return { ok:false, type:"err", msg:`Le mot doit faire au plus ${r.maxLen} lettres.` };
+      }
+    }
+    if (r.type === "words_prefix" && r.prefix){
+      if (!entryN.startsWith(APP.normalizeText(r.prefix))){
+        return { ok:false, type:"err", msg:`Le mot doit commencer par "${r.prefix.toLowerCase()}".` };
+      }
+    }
+    if (r.type === "words_rare_letters"){
+      if (!APP.defis.LETTERS_RARE.some(letter => entryN.startsWith(letter))){
+        return { ok:false, type:"err", msg:"Le mot doit commencer par W, X, Y ou Z." };
       }
     }
   }
