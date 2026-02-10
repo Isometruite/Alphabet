@@ -73,7 +73,9 @@ APP.defis.createBroadcastTransport = function(code){
 APP.defis.createWebSocketTransport = function(wsUrl, code, role, name){
   return new Promise((resolve, reject) => {
     let settled = false;
-    const ws = new WebSocket(wsUrl);
+      const WS_BASE = "wss://alphabet-5.onrender.com";
+      const ws = new WebSocket(`${WS_BASE}/coop?room=${encodeURIComponent(roomId)}&player=${encodeURIComponent(playerId)}`);
+
 
     const timeout = setTimeout(() => {
       if (settled) return;
@@ -795,3 +797,4 @@ APP.defis.coopNextRound = function(){
   APP.store.defis.currentIndex = next;
   APP.defis.startCountdownAt(startAt, () => APP.defis.startRound(next, endAt));
 };
+
