@@ -327,7 +327,7 @@ APP.defis.generateRounds = function(forceShuffle=false){
       icon: "🧪",
       diff: "Test",
       diffClass: "diff-easy",
-      text: `Trouve ${goal} mots qui commencent par "${letter}" en 20s (sauf Z, Y, X, W, U, K et Q)`,
+      text: `Trouve ${goal} mots qui commencent par "${letter}" en 20s`,
       goal,
       letter,
       seconds: 20
@@ -355,16 +355,19 @@ APP.defis.generateRounds = function(forceShuffle=false){
   const tierTemplates = {
     facile: [
       () => makeLetterRound({ diff: "Facile", diffClass: "diff-easy", icon: "⏱️", goal: 30, seconds: 120 }),
-      () => ({
-        type: "words_letter_maxlen",
-        icon: "✂️",
-        diff: "Facile",
-        diffClass: "diff-easy",
-        text: "Trouve 15 mots d'une lettre autorisée de max 5 lettres",
-        goal: 15,
-        maxLen: 5,
-        allowedLetters
-      }),
+      () => {
+        const letter = pickAllowedLetter();
+        return {
+          type: "words_letter_maxlen",
+          icon: "✂️",
+          diff: "Facile",
+          diffClass: "diff-easy",
+          text: `Trouve 15 mots en "${letter}" de max 5 lettres`,
+          goal: 15,
+          maxLen: 5,
+          allowedLetters: [letter]
+        };
+      },
       () => ({
         type: "words_prefix2",
         icon: "🔤",
@@ -389,17 +392,20 @@ APP.defis.generateRounds = function(forceShuffle=false){
     ],
     difficile: [
       () => makeLetterRound({ diff: "Difficile", diffClass: "diff-hard", icon: "⏱️", goal: 50, seconds: 75 }),
-      () => ({
-        type: "words_letter_minlen",
-        icon: "📚",
-        diff: "Difficile",
-        diffClass: "diff-hard",
-        text: "Trouve 15 mots d'une lettre autorisée de 7 lettres et + en 60s",
-        goal: 15,
-        minLen: 7,
-        allowedLetters,
-        seconds: 60
-      }),
+      () => {
+        const letter = pickAllowedLetter();
+        return {
+          type: "words_letter_minlen",
+          icon: "📚",
+          diff: "Difficile",
+          diffClass: "diff-hard",
+          text: `Trouve 15 mots en "${letter}" de 7 lettres et + en 60s`,
+          goal: 15,
+          minLen: 7,
+          allowedLetters: [letter],
+          seconds: 60
+        };
+      },
       () => ({
         type: "words_letters_group",
         icon: "🔥",
@@ -421,22 +427,25 @@ APP.defis.generateRounds = function(forceShuffle=false){
           icon: "👑",
           diff: "Extrême",
           diffClass: "diff-boss",
-          text: `Trouve ${goal} mots en 60s avec la lettre "${letter}" (sauf Z, Y, X, W, U, K et Q)`,
+          text: `Trouve ${goal} mots en 60s avec la lettre "${letter}"`,
           goal,
           letter,
           seconds: 60
         };
       },
-      () => ({
-        type: "words_letter_minlen",
-        icon: "🧠",
-        diff: "Extrême",
-        diffClass: "diff-boss",
-        text: "Trouve 7 mots de 9 lettres ou + d'une lettre autorisée (sauf Z, Y, X, W, U, K et Q)",
-        goal: 7,
-        minLen: 9,
-        allowedLetters
-      })
+      () => {
+        const letter = pickAllowedLetter();
+        return {
+          type: "words_letter_minlen",
+          icon: "🧠",
+          diff: "Extrême",
+          diffClass: "diff-boss",
+          text: `Trouve 7 mots en "${letter}" de 9 lettres ou +`,
+          goal: 7,
+          minLen: 9,
+          allowedLetters: [letter]
+        };
+      }
     ]
   };
 
