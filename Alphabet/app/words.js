@@ -69,6 +69,7 @@ APP.words.submit = (raw) => {
   if (!entryN){
     APP.$("feedback").style.color = "#dc2626";
     APP.$("feedback").textContent = "Vide.";
+    APP.playFeedbackSound("negative");
     clearBad();
     return;
   }
@@ -76,6 +77,7 @@ APP.words.submit = (raw) => {
   if (!entryN.startsWith(APP.normalizeText(letter))){
     APP.$("feedback").style.color = "#dc2626";
     APP.$("feedback").textContent = `Doit commencer par "${letter}".`;
+    APP.playFeedbackSound("negative");
     clearBad();
     return;
   }
@@ -84,6 +86,7 @@ APP.words.submit = (raw) => {
   if (!listN.includes(entryN)){
     APP.$("feedback").style.color = "#dc2626";
     APP.$("feedback").textContent = "Mot absent de la liste.";
+    APP.playFeedbackSound("negative");
     clearBad();
     return;
   }
@@ -91,6 +94,7 @@ APP.words.submit = (raw) => {
   if (APP.store.words.found.has(entryN)){
     APP.$("feedback").style.color = "#ca8a04";
     APP.$("feedback").textContent = "Déjà trouvé.";
+    APP.playFeedbackSound("negative");
     clearBad();
     return;
   }
@@ -112,6 +116,7 @@ APP.words.submit = (raw) => {
   APP.$("barFill").style.width = `${pct}%`;
   APP.$("feedback").style.color = "#16a34a";
   APP.$("feedback").textContent = "✅ Valide !";
+  APP.playFeedbackSound("positive");
 
   const countEl = document.querySelector("#foundCount");
   if (countEl) countEl.textContent = String(current);
