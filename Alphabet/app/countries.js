@@ -34,6 +34,7 @@ APP.countries.submit = (raw) => {
   if (!entryN){
     APP.$("feedback").style.color = "#dc2626";
     APP.$("feedback").textContent = "Vide.";
+    APP.playFeedbackSound("negative");
     clearBad();
     return;
   }
@@ -42,6 +43,7 @@ APP.countries.submit = (raw) => {
   if (!listN.includes(entryN)){
     APP.$("feedback").style.color = "#dc2626";
     APP.$("feedback").textContent = "Pays absent de la liste.";
+    APP.playFeedbackSound("negative");
     clearBad();
     return;
   }
@@ -49,6 +51,7 @@ APP.countries.submit = (raw) => {
   if (APP.store.countries.found.has(entryN)){
     APP.$("feedback").style.color = "#ca8a04";
     APP.$("feedback").textContent = "Déjà trouvé.";
+    APP.playFeedbackSound("negative");
     clearBad();
     return;
   }
@@ -70,6 +73,7 @@ APP.countries.submit = (raw) => {
   APP.$("barFill").style.width = `${pct}%`;
   APP.$("feedback").style.color = "#16a34a";
   APP.$("feedback").textContent = "✅ Valide !";
+  APP.playFeedbackSound("positive");
 
   const countEl = document.querySelector("#foundCount");
   if (countEl) countEl.textContent = String(current);
