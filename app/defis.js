@@ -279,6 +279,13 @@ APP.defis.countWordsStarting = function(letter){
   const L = APP.normalizeText(letter);
   return window.DATA.LISTE_MOTS_FRANCAIS.filter(w => APP.normalizeText(w).startsWith(L)).length;
 };
+APP.defis.countWordsStartingWithLength = function(letter, length){
+  const L = APP.normalizeText(letter);
+  return window.DATA.LISTE_MOTS_FRANCAIS.filter((w) => {
+    const normalized = APP.normalizeText(w);
+    return normalized.startsWith(L) && normalized.length === length;
+  }).length;
+};
 APP.defis.clampGoal = function(max, desired){ return max <= 0 ? 0 : Math.min(max, desired); };
 
 APP.defis.generateRounds = function(forceShuffle=false){
@@ -327,15 +334,22 @@ APP.defis.generateRounds = function(forceShuffle=false){
     };
   };
 
-  const mediumExactRound = {
-    type: "words_letter_exact_lengths",
-    icon: "📏",
-    diff: "Moyen",
-    diffClass: "diff-mid",
-    text: "Trouve 10 mots d'une lettre autorisée de exactement 4, 5, 6 ou 7 lettres",
-    goal: 10,
-    exactLengths: [4, 5, 6, 7],
-    allowedLetters
+  const makeMediumExactRound = () => {
+    const length = pickOne([4, 5, 6, 7]);
+    const letter = pickAllowedLetter();
+    const max = APP.defis.countWordsStartingWithLength(letter, length);
+    const goal = APP.defis.clampGoal(max, 10);
+    return {
+      type: "words_letter_exact_lengths",
+      icon: "📏",
+      diff: "Moyen",
+      diffClass: "diff-mid",
+      text: `Trouve ${goal} mots en "${letter}" d'exactement ${length} lettres`,
+      goal,
+      letter,
+      exactLengths: [length],
+      allowedLetters
+    };
   };
 
   const tierTemplates = {
@@ -371,7 +385,7 @@ APP.defis.generateRounds = function(forceShuffle=false){
         text: "Cite 15 pays",
         goal: APP.defis.clampGoal(window.DATA.LISTE_PAYS_FRANCAIS.length, 15)
       }),
-      () => ({ ...mediumExactRound })
+      () => makeMediumExactRound()
     ],
     difficile: [
       () => makeLetterRound({ diff: "Difficile", diffClass: "diff-hard", icon: "⏱️", goal: 50, seconds: 75 }),
