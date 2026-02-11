@@ -9,83 +9,120 @@ const server = http.createServer((req, res) => {
     res.end("ok");
     return;
   }
+
   res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Alphabet WS server running");
+  res.end("Alphabet coop server running.\n");
 });
 
-const wss = new WebSocketServer({ server });
-
-// roomId -> Set of sockets
+const wss = new WebSocketServer({ noServer: true });
 const rooms = new Map();
 
-function getRoom(roomId) {
-  if (!rooms.has(roomId)) rooms.set(roomId, new Set());
-  return rooms.get(roomId);
-}
+const getRoom = (code) => {
+  if (!rooms.has(code)) rooms.set(code, { clients: new Set(), host: null });
+  return rooms.get(code);
+};
 
-function send(ws, obj) {
-  if (ws.readyState === 1) { // 1 = OPEN
-    ws.send(JSON.stringify(obj));
+const removeClient = (code, ws) => {
+  const room = rooms.get(code);
+  if (!room) return;
+
+  room.clients.delete(ws);
+  if (room.host === ws) room.host = null;
+  if (room.clients.size === 0) rooms.delete(code);
+};
+
+const send = (ws, msg) => {
+  if (ws.readyState !== ws.OPEN) return;
+  ws.send(JSON.stringify(msg));
+};
+
+const broadcast = (code, sender, msg) => {
+  const room = rooms.get(code);
+  if (!room) return;
+
+  for (const client of room.clients) {
+    if (client === sender) continue;
+    send(client, msg);
   }
-}
+};
 
-wss.on("connection", (ws, req) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-
-  // S'assure qu'on est bien sur /coop (évite /coop/ ou /coop/coop selon ton front)
-  if (url.pathname !== "/coop") {
-    ws.close(1008, "Wrong path");
-    return;
-  }
-
-  const roomId = (url.searchParams.get("room") || "").trim();
-  const playerId =
-    (url.searchParams.get("player") || "").trim() ||
-    `p_${Math.random().toString(16).slice(2)}`;
-
-  if (!roomId) {
-    // Autorise une connexion "probe" (test) sans room
-    send(ws, { t: "server_ok" });
-    return;
-  }
-
-  ws._roomId = roomId;
-  ws._playerId = playerId;
-
-  const room = getRoom(roomId);
-  room.add(ws);
-
-  send(ws, {
-    t: "welcome",
-    room: roomId,
-    player: playerId,
-    peers: [...room].filter(x => x !== ws).map(x => x._playerId)
-  });
-
-  for (const peer of room) {
-    if (peer !== ws) send(peer, { t: "peer_join", player: playerId });
-  }
-
+wss.on("connection", (ws) => {
   ws.on("message", (raw) => {
-    let msg;
-    try { msg = JSON.parse(raw.toString()); } catch { return; }
-
-    for (const peer of room) {
-      if (peer === ws) continue;
-      send(peer, { ...msg, _from: playerId });
+    let msg = null;
+    try {
+      msg = JSON.parse(raw.toString());
+    } catch (_err) {
+      return;
     }
+
+    if (msg.type === "HELLO") {
+      const payload = msg.payload || {};
+      const code = String(payload.code || "").trim().toUpperCase();
+      const role = payload.role === "host" ? "host" : "join";
+
+      if (!code) {
+        send(ws, { type: "HELLO_ERR", payload: { code: "INVALID_CODE", message: "Code invalide." } });
+        return;
+      }
+
+      const existing = rooms.get(code);
+      if (role === "host" && existing && existing.host) {
+        send(ws, { type: "HELLO_ERR", payload: { code: "ROOM_EXISTS", message: "Partie déjà existante." } });
+        return;
+      }
+
+      if (role === "join" && (!existing || !existing.host)) {
+        send(ws, { type: "HELLO_ERR", payload: { code: "ROOM_NOT_FOUND", message: "Aucune partie trouvée." } });
+        return;
+      }
+
+      const room = getRoom(code);
+      room.clients.add(ws);
+      if (role === "host") room.host = ws;
+
+      ws.roomCode = code;
+      ws.role = role;
+
+      send(ws, { type: "HELLO_OK" });
+      return;
+    }
+
+    const code = msg.code || ws.roomCode;
+    if (!code) return;
+
+    broadcast(code, ws, { type: msg.type, payload: msg.payload });
   });
 
   ws.on("close", () => {
-    const r = rooms.get(ws._roomId);
-    if (!r) return;
-    r.delete(ws);
+    const code = ws.roomCode;
+    if (!code) return;
 
-    if (r.size === 0) rooms.delete(ws._roomId);
-    else for (const peer of r) send(peer, { t: "peer_leave", player: playerId });
+    const room = rooms.get(code);
+    if (room && room.host === ws) {
+      for (const client of room.clients) {
+        send(client, { type: "ROOM_CLOSED", payload: { message: "Le host a quitté la partie." } });
+        if (client !== ws) client.close();
+      }
+      rooms.delete(code);
+      return;
+    }
+
+    removeClient(code, ws);
+  });
+});
+
+server.on("upgrade", (req, socket, head) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  if (url.pathname !== "/coop") {
+    socket.destroy();
+    return;
+  }
+
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit("connection", ws, req);
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`WS listening on port ${PORT} (path /coop)`);
+  console.log(`Alphabet coop server listening on :${PORT}`);
 });
